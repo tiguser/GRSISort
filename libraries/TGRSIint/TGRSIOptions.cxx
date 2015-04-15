@@ -16,6 +16,8 @@ namespace TGRSIOptions {
   bool fIgnoreEpics    = false;
   bool fCloseAfterSort = false;
 
+  int  fNumberOfWriteThreads = 1;
+
   std::string fexptname;
   std::string fhostname;
   
@@ -67,6 +69,9 @@ bool UseMidFileOdb()                      { return fUseMidFileOdb;}
 
 void SetMakeAnalysisTree(bool flag)  { fMakeAnalysisTree=flag;  }
 bool MakeAnalysisTree()                   { return fMakeAnalysisTree;}
+
+void SetNumberOfWriteThreads(int num) { fNumberOfWriteThreads = num; }
+int  GetNumberOfWriteThreads()        { return fNumberOfWriteThreads; }
 
 void SetHostName(std::string &host) {fhostname.assign(host);}
 void SetExptName(std::string &expt) {fexptname.assign(expt);}

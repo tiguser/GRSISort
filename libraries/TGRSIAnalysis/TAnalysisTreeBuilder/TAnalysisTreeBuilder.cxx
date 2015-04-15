@@ -8,11 +8,28 @@
 #include "TAnalysisTreeBuilder.h"
 #include "TGRSIOptions.h"
 
+#include <TMessage.h>
+#include <TSocket.h>
+#include <TServerSocket.h>
+#include <TMonitor.h>
 #include <TStopwatch.h>
+
+#include <TMemFile.h>
+#include <TFileMerger.h>
 
 #include <TGRSIOptions.h>
 
 //#include "TSharcData.h"
+
+
+
+enum StatusKind {
+   kStartConnection = 0,
+   kProtocol        = 1,
+   kProtocolVersion = 1
+};
+
+
 
 
 std::mutex TEventQueue::m_event;
@@ -114,6 +131,24 @@ int TWriteQueue::Size() {
 
 ClassImp(TAnalysisTreeBuilder)
 
+
+std::mutex TAnalysisTreeBuilder::m_analysisout;
+bool TAnalysisTreeBuilder::fServerRunning = true;
+
+
+void TAnalysisTreeBuilder::AnalysisOutPlusPlus() {
+  m_analysisout.lock();
+  fAnalysisOut++;
+  m_analysisout.unlock();
+}
+
+int TAnalysisTreeBuilder::AnalysisOut() {
+  m_analysisout.lock();
+  int tmp = fAnalysisOut;
+  m_analysisout.unlock();
+  return tmp;
+}
+
 //This sets the minimum amount of memory that root can hold a tree in.
 const size_t TAnalysisTreeBuilder::MEM_SIZE = (size_t)1024*(size_t)1024*(size_t)1024*(size_t)8; // 8 GB
 
@@ -138,12 +173,12 @@ TAnalysisTreeBuilder::TAnalysisTreeBuilder() {
    fFragmentChain = 0;
    fCurrentFragTree = 0;
    fCurrentFragFile = 0;
-   fCurrentAnalysisTree = 0;
-   fCurrentAnalysisFile = 0;
+//   fCurrentAnalysisTree = 0;
+//   fCurrentAnalysisFile = 0;
    fCurrentRunInfo = 0;
 
    fCurrentFragPtr = 0;
-
+/*
    tigress = 0;//new TTigress;
    sharc = 0;//new TSharc;
    triFoil = 0;//new TTriFoil;
@@ -158,7 +193,7 @@ TAnalysisTreeBuilder::TAnalysisTreeBuilder() {
    descant = 0;//new TDescant;
    //dante->Clear();
    //zerodegree->Clear();
-
+*/
 }
 
 
@@ -249,22 +284,27 @@ void TAnalysisTreeBuilder::SortFragmentChain() {
       fCurrentFragTree = fFragmentChain->GetTree();
       int nentries = fCurrentFragTree->GetEntries();
       SetupFragmentTree();
-      SetupOutFile();
-      SetupAnalysisTree();
+      
+      fFragmentsIn = 0;
+      fAnalysisIn  = 0;
+      fAnalysisOut = 0;
 
       fSortFragmentDone = false;
       fPrintStatus = true;
       fProcessThread = new std::thread(&TAnalysisTreeBuilder::ProcessEvent,this);
-      fWriteThread = new std::thread(&TAnalysisTreeBuilder::WriteAnalysisTree,this);
+//      fWriteThread = new std::thread(&TAnalysisTreeBuilder::WriteAnalysisTree,this);
       fStatusThread = new std::thread(&TAnalysisTreeBuilder::Status,this);
 
-      fFragmentsIn = 0;
-      fAnalysisIn  = 0;
-      fAnalysisOut = 0;
+      //SetupOutFile();
+      SetupOutServer();
+      //SetupAnalysisTree();
+      SetupAnalysisClients();
+
       if(fCurrentRunInfo->Griffin())
          SortFragmentTreeByTimeStamp();
       else
          SortFragmentTree();
+
       fSortFragmentDone = true;
 
       fProcessThread->join();
@@ -274,7 +314,7 @@ void TAnalysisTreeBuilder::SortFragmentChain() {
       CloseAnalysisFile();
       printf("\n");
       i+=(nentries);//-10);
-      fCurrentFragFile->Close("r");
+      fCurrentFragFile->Close("R");
    }
    printf("Finished chain sort.\n");
    return;
@@ -493,7 +533,7 @@ void TAnalysisTreeBuilder::SetupFragmentTree() {
    return;
 }
 
-void TAnalysisTreeBuilder::SetupOutFile() {
+void TAnalysisTreeBuilder::SetupOutServer() {
    //Sets up the anaysistree.root file to write the created events into
    if(!fCurrentRunInfo)
       return;
@@ -503,59 +543,288 @@ void TAnalysisTreeBuilder::SetupOutFile() {
    else
      outfilename = Form("analysis%05i_%03i.root",fCurrentRunInfo->RunNumber(),fCurrentRunInfo->SubRunNumber());
    //We add the output analysis file to the "input root files" in case we want to do something with that file after we finish 
-   //sorting it.
+   //sorting it.   In otherwords, adding it hear opens it automatically in interactive mode once the sort is over.
    TGRSIOptions::AddInputRootFile(outfilename);
-   if(fCurrentAnalysisFile)
-      delete fCurrentAnalysisFile;
-   fCurrentAnalysisFile = new TFile(outfilename.c_str(),"recreate");
-   fCurrentAnalysisFile->SetCompressionSettings(1);
-   printf("created output file: %s\n",fCurrentAnalysisFile->GetName());
+
+   fCurrentAnalysisFileName = outfilename;
+
+   fFillServerThread = new std::thread(&TAnalysisTreeBuilder::FillServer,this);
+
+   //if(fCurrentAnalysisFile)
+   //   delete fCurrentAnalysisFile;
+   //fCurrentAnalysisFile = new TFile(outfilename.c_str(),"recreate");
+   //fCurrentAnalysisFile->SetCompressionSettings(1);
+   printf("started output server feeding file: %s\n",fCurrentAnalysisFileName.c_str());
    return;
 }
 
-void TAnalysisTreeBuilder::SetupAnalysisTree() { 
+void TAnalysisTreeBuilder::FillServer() {
+  TServerSocket *socketServer = new TServerSocket(9099,true);
+  TMonitor *monitor = new TMonitor;
+  monitor->Add(socketServer);
+
+  unsigned int numberofclients=0;
+  TMemFile *transient = 0;
+
+  TFileMerger merger(false,false);
+  merger.SetPrintLevel(0);
+
+  while(fServerRunning) {
+    TMessage *message;
+    TSocket  *socket;
+    socket = monitor->Select();
+    if(socket->IsA() == TServerSocket::Class()) {
+      if(numberofclients > TGRSIOptions::GetNumberOfWriteThreads()) {
+        printf("currently only excepting %i writing threads.\n", TGRSIOptions::GetNumberOfWriteThreads() );
+        monitor->Remove(socket);
+        socketServer->Close();
+      } else {
+         TSocket *client = ((TServerSocket*)socket)->Accept();
+         client->Send(numberofclients++,kStartConnection);
+         client->Send(kProtocolVersion,kProtocol);
+         monitor->Add(client);
+         printf("Accepted %i connections\n",numberofclients);
+      }
+      continue;
+    }
+ 
+    socket->Recv(message);
+    if(message==NULL) {
+      printf("[recv] clent message null\n");
+      continue;
+    }
+    switch(message->What()) {
+       case kMESS_STRING: {
+          char str[64];
+          message->ReadString(str,64);
+          printf("Client %i: '%s\n'",numberofclients-1,str);
+          monitor->Remove(socket);
+          //
+          socket->Close();
+          numberofclients--;
+          if(monitor->GetActive()==0 || numberofclients==0) {
+            printf("no active clients, closing server\n");
+            delete message;
+            return;
+          }
+       }
+       break;
+       case kMESS_ANY: {
+          Long64_t length;
+          TString filename;
+          int clientId;
+          message->ReadInt(clientId);
+          message->ReadTString(filename);
+          message->ReadLong64(length);
+          delete transient;
+          transient = new TMemFile(filename,message->Buffer()+message->Length(),length,"recreate");
+          message->SetBufferOffset(message->Length()+length);
+          if(!merger.OutputFile(fCurrentAnalysisFileName.c_str(),"update")) {
+             printf("server fail to open outfile.\n");
+             return ;
+          }
+          if(!merger.AddAdoptFile(transient)) {
+             printf("server failed to adopt file.\n");
+             return ;
+          }
+          if(!merger.PartialMerge(TFileMerger::kAllIncremental)) {
+             printf("server failed to partial merge.\n");
+             return ;
+          }
+          transient = NULL;
+       }
+       break;
+       case kMESS_OBJECT: 
+          printf("server recieved object of class %s\n",message->GetClass()->GetName());
+          break;
+       default:
+          printf("server recieved unexpected message.\n");
+          break;
+      };
+     delete message;    
+   }
+  return;
+}
+
+void TAnalysisTreeBuilder::SetupAnalysisClients() { 
    //Sets up the analysis tree by creating branches of the available detector systems. The available detector systems
    //are set in the RunInfo of the fragment tree. When the analysis tree sorting begins, an output is created on screen
    //that tells you which detector systems were found in the RunInfo.
-   if(!fCurrentAnalysisFile || !fCurrentRunInfo)
-      return;
-   //Create a new Analysis Tree in the analysistree.root file.
-   fCurrentAnalysisFile->cd();
-   if(fCurrentAnalysisTree)
-      delete fCurrentAnalysisTree;
-   fCurrentAnalysisTree = new TTree("AnalysisTree","AnalysisTree");
 
-   //Load in the run info
-   TGRSIRunInfo *info = fCurrentRunInfo;
-   TTree *tree = fCurrentAnalysisTree;
+   for(int x=0;x<TGRSIOptions::GetNumberOfWriteThreads();x++) {
+     printf( "\n    i am here x = %i\n",x);
+     fFillClientThreads[x] = new std::thread(&TAnalysisTreeBuilder::FillClient,this);
+   }
 
    //Set new branches in the analysis tree if the run info in the fragment tree says the detectors are in the data stream
-   int basketSize = 128000; //128000;
-   if(info->Tigress())   { tree->Bronch("TTigress","TTigress",&tigress); }//, basketSize); } 
-   if(info->Sharc())     { tree->Bronch("TSharc","TSharc",&sharc); }//, basketSize); } 
-   if(info->TriFoil())   { tree->Bronch("TTriFoil","TTriFoil",&triFoil); }//, basketSize); } 
-   //if(info->Rf())        { tree->Bronch("TRf","TRf",&rf); }//, basketSize); } 
-   if(info->CSM())       { tree->Bronch("TCSM","TCSM",&csm); }//, basketSize); } 
-   //if(info->Spice())     { tree->Bronch("TSpice","TSpice",&spice); }//, basketSize); tree->SetBronch("TS3","TS3",&s3); }//, basketSize); } 
-   //if(info->Tip())       { tree->Bronch("TTip","TTip",&tip); }//, basketSize); } 
-
-   if(info->Griffin())   { TBranch *branch = tree->Bronch("TGriffin","TGriffin",&griffin, basketSize, 99);}// branch->SetAddress(0);} 
-   if(info->Sceptar())   { TBranch *branch = tree->Bronch("TSceptar","TSceptar",&sceptar, basketSize, 99);}// branch->SetAddress(0);} 
-   if(info->Paces())     { tree->Bronch("TPaces","TPaces",&paces, basketSize,99); }//, basketSize); } 
-   //if(info->Dante())     { tree->Bronch("TDante","TDante",&dante); }//, basketSize); } 
-   //if(info->ZeroDegree()){ tree->Bronch("TZeroDegree","TZeroDegree",&zerodegree); }//, basketSize); } 
-   if(info->Descant())   { tree->Bronch("TDescant","TDescant",&descant); }//, basketSize);
-
-   //tree->SetAutoFlush(-300000000);
-   //tree->SetCacheSizeAux(true);
-
-   //tree->SetAutoFlush(-500000000);
-   //tree->SetCacheSize();
-   //tree->AddBranchToCache("*",true);
-   //tree->SetAutoSave(10000000);
    return;  
 }
 
+void TAnalysisTreeBuilder::FillClient() {
+
+   TSocket *socket = new TSocket("localhost",9099);
+   if(!socket->IsValid()) {
+      printf("client could not connect on localhost:9099\n");
+      delete socket;
+      return;
+   }
+   int clientnumber,version,kind;
+   socket->Recv(clientnumber,kind);
+   if(kind!=kStartConnection) {
+     printf("[connect] unexpected server message: %i\n",kind);
+     delete socket;
+     return;
+   }
+   socket->Recv(version,kind);
+   if(kind!=kProtocolVersion) {
+      printf("[version] unexpected server message: %i\n",kind);
+      delete socket;
+      return;
+   }
+  
+   printf("client[%i] connected to server.\n",clientnumber);
+
+   float messafeLength           = 0;
+   float compressedMessageLength = 0;
+  
+   TMemFile *file = new TMemFile(Form("MergeClient_%02i.root",clientnumber),"recreate");
+   file->Print();
+
+   if(!fCurrentRunInfo)
+      return;
+   TTree fClientAnalysisTree("AnalysisTree","AnalysisTree");
+   TGRSIRunInfo *info = fCurrentRunInfo;
+
+   TTigress *tigress = 0;//new TTigress;
+   TSharc   *sharc   = 0;//new TSharc;
+   TTriFoil *triFoil = 0;//new TTriFoil;
+   //rf->Clear();
+   TCSM     *csm     = 0;//new TCSM;
+   //spice->Clear(); s3->Clear();
+   //tip->Clear();
+
+   TGriffin *griffin = 0;//new TGriffin;
+   TSceptar *sceptar = 0;//new TSceptar;
+   TPaces   *paces   = 0;//new TPaces;
+   TDescant *descant = 0;//new TDescant;
+   //dante->Clear();
+   //zerodegree->Clear();
+   if(info->Tigress())   { fClientAnalysisTree.Branch("TTigress","TTigress",&tigress);}//, basketSize); } 
+   if(info->Sharc())     { fClientAnalysisTree.Branch("TSharc","TSharc",&sharc); }//, basketSize); } 
+   if(info->TriFoil())   { fClientAnalysisTree.Branch("TTriFoil","TTriFoil",&triFoil);}//, basketSize); } 
+   //if(info->Rf())        { tree->Bronch("TRf","TRf",&rf); }//, basketSize); } 
+   if(info->CSM())       { fClientAnalysisTree.Branch("TCSM","TCSM",&csm); }//, basketSize); } 
+   //if(info->Spice())     { tree->Bronch("TSpice","TSpice",&spice); }//, basketSize); 
+   //tree->SetBronch("TS3","TS3",&s3); }//, basketSize); } 
+   //if(info->Tip())       { tree->Bronch("TTip","TTip",&tip); }//, basketSize); } 
+
+   if(info->Griffin())   { fClientAnalysisTree.Branch("TGriffin","TGriffin",&griffin);} 
+   if(info->Sceptar())   { fClientAnalysisTree.Branch("TSceptar","TSceptar",&sceptar);} 
+   if(info->Paces())     { fClientAnalysisTree.Branch("TPaces","TPaces",&paces);}//, basketSize); } 
+   if(info->Descant())   { fClientAnalysisTree.Branch("TDescant","TDescant",&descant);}//, basketSize);
+   //if(info->Dante())     { tree->Bronch("TDante","TDante",&dante); }//, basketSize); } 
+   //if(info->ZeroDegree()){ tree->Bronch("TZeroDegree","TZeroDegree",&zerodegree); }//, basketSize); } 
+
+   TMessage::EnableSchemaEvolutionForAll(true);
+   TMessage message(kMESS_OBJECT);
+
+   int NumberOfFills=0;
+   while(TWriteQueue::Size() > 0 || TEventQueue::Size() > 0 || !fSortFragmentDone) {
+      if(TWriteQueue::Size() == 0) {
+         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+         continue;
+      }
+      std::map<const char*, TGRSIDetector*> *detectors = TWriteQueue::PopEntry();
+  
+      //fAnalysisOut++;
+      AnalysisOutPlusPlus();
+      //FillAnalysisTree(fClientAnalysisTree,detectors);
+
+      for(auto det = detectors->begin(); det != detectors->end(); det++) {
+         if(strcmp(det->first,"TI") == 0) {
+            tigress = (TTigress*) det->second;
+         } else if(strcmp(det->first,"SH") == 0) {
+            sharc = (TSharc*) det->second;
+         } else if(strcmp(det->first,"Tr") == 0) {
+            triFoil = (TTriFoil*) det->second;
+            //*rf = *((TRf*) det->second);
+         } else if(strcmp(det->first,"CS") == 0) {
+            csm = (TCSM*) det->second;
+         //} else if(strcmp(det->second->IsA()->GetName(),"TSpice") == 0) {
+            //*spice = *((TSpice*) det->second);
+         //} else if(strcmp(det->second->IsA()->GetName(),"TTip") == 0) {
+            //*tip = *((TTip*) det->second);
+         } else if(strcmp(det->first,"GR") == 0) {
+            griffin = (TGriffin*) det->second;
+         } else if(strcmp(det->first,"SE") == 0) {
+            sceptar = (TSceptar*) det->second;
+         } else if(strcmp(det->first,"DS") == 0) {
+            descant = (TDescant*) det->second;
+         } else if(strcmp(det->first,"PA") == 0) {
+            paces = (TPaces*) det->second;
+         } 
+      }
+ 
+      fClientAnalysisTree.Fill();
+
+      if(info->Tigress())   { tigress->Clear();} //
+      if(info->Sharc())     { sharc->Clear(); }  //
+      if(info->TriFoil())   { triFoil->Clear();} //
+      //if(info->Rf())                           //
+      if(info->CSM())       { csm->Clear(); }    //
+      //if(info->Spice())     ice);              //
+      //tree->SetBronch("TS3",
+      //if(info->Tip())                          //
+
+      if(info->Griffin())   { griffin->Clear();} 
+      if(info->Sceptar())   { sceptar->Clear();} 
+      if(info->Paces())     { paces->Clear();}   //
+      if(info->Descant())   { descant->Clear();} //
+
+      for(auto det = detectors->begin(); det != detectors->end(); det++) {
+         delete det->second;
+         det->second = 0;
+      }
+      delete detectors;
+      detectors = 0;
+
+
+      //ok, now the tree has been filed.  Next we check the how many times
+      //the tree has been filled and update if it is large enough, send
+      //it to the server.
+      if((NumberOfFills&10000)==0) {
+        file->Write();
+        message.Reset(kMESS_ANY);
+        message.WriteInt(clientnumber);
+        message.WriteTString(file->GetName());
+        message.WriteLong64(file->GetEND());
+        file->CopyTo(message);
+        socket->Send(message);
+        file->ResetAfterMerge(0); 
+      }
+   }
+   if(fClientAnalysisTree.GetEntries()>0) {
+     file->Write();
+     message.Reset(kMESS_ANY);
+     message.WriteInt(clientnumber);
+     message.WriteTString(file->GetName());
+     message.WriteLong64(file->GetEND());
+     file->CopyTo(message);
+     socket->Send(message);
+     file->ResetAfterMerge(0); 
+   }
+
+  socket->Send("Finished");
+  printf("client exiting\n");
+  socket->Close();
+  return ;
+}
+
+
+
+
+
+/*
 void TAnalysisTreeBuilder::ClearActiveAnalysisTreeBranches() {
    //Clears the current analysis tree branches.
    if(!fCurrentAnalysisFile || !fCurrentRunInfo)
@@ -580,14 +849,14 @@ void TAnalysisTreeBuilder::ClearActiveAnalysisTreeBranches() {
    if(info->Descant())   { descant->Clear();}
    //printf("ClearActiveAnalysisTreeBranches done\n");
 }
-
-
-void TAnalysisTreeBuilder::ResetActiveAnalysisTreeBranches() {
+*/
+/*
+void TAnalysisTreeBuilder::ResetActiveAnalysisTreeBranches(TTree *tree) {
    //Clears the current analysis tree branches.
-   if(!fCurrentAnalysisFile || !fCurrentRunInfo)
+   if(strcmp(tree->GetName(),"AnalysisTree") || !fCurrentRunInfo)
       return;
    TGRSIRunInfo *info = fCurrentRunInfo;
-   TTree *tree = fCurrentAnalysisTree;
+   //TTree *tree = fCurrentAnalysisTree;
 
    if(info->Tigress())   { tigress = 0; }//->Clear(); }
    if(info->Sharc())     { sharc = 0; }//->Clear(); }
@@ -606,7 +875,7 @@ void TAnalysisTreeBuilder::ResetActiveAnalysisTreeBranches() {
    if(info->Descant())   { descant = 0; }//->Clear();}
    //printf("ClearActiveAnalysisTreeBranches done\n");
 }
-
+*/
 
 
 
@@ -617,10 +886,9 @@ void TAnalysisTreeBuilder::ResetActiveAnalysisTreeBranches() {
 
 void TAnalysisTreeBuilder::BuildActiveAnalysisTreeBranches(std::map<const char*, TGRSIDetector*> *detectors) {
    //Build the hits in each of the detectors.
-   if(!fCurrentAnalysisFile || !fCurrentRunInfo)
+   if( !fCurrentRunInfo)
       return;
    TGRSIRunInfo *info = fCurrentRunInfo;
-   TTree *tree = fCurrentAnalysisTree;
 
    for(auto det = detectors->begin(); det != detectors->end(); det++) {
       det->second->BuildHits();
@@ -632,7 +900,7 @@ void TAnalysisTreeBuilder::FillWriteQueue(std::map<const char*, TGRSIDetector*> 
    fAnalysisIn++;
    TWriteQueue::Get()->Add(detectors);
 }
-
+/*
 void TAnalysisTreeBuilder::WriteAnalysisTree() {
    //Write the analysis tree to the root file. We do this by filling the analysis tree with each
    //of the built events in the write Q.
@@ -648,85 +916,42 @@ void TAnalysisTreeBuilder::WriteAnalysisTree() {
       FillAnalysisTree(detectors);
    }
 }
-
-void TAnalysisTreeBuilder::FillAnalysisTree(std::map<const char*, TGRSIDetector*> *detectors) {
-   //Fill the analysis Tree with the built events. Each detector gets its own branch in the analysis tree
-   if(!fCurrentAnalysisTree || !detectors) {
-      printf("returned from fill without filling (%p %p)!\n",fCurrentAnalysisTree, detectors);   
-      return;
-   }   
-   
-   // clear branches
-   //ClearActiveAnalysisTreeBranches();	
-   ResetActiveAnalysisTreeBranches();	
-   
-
-   //Fill the detector map with TDetector classes if the mnemonic of the detector is in the map.
-   for(auto det = detectors->begin(); det != detectors->end(); det++) {
-      if(strcmp(det->first,"TI") == 0) {
-         tigress = (TTigress*) det->second;
-      } else if(strcmp(det->first,"SH") == 0) {
-         sharc = (TSharc*) det->second;
-      } else if(strcmp(det->first,"Tr") == 0) {
-         triFoil = (TTriFoil*) det->second;
-         //*rf = *((TRf*) det->second);
-      } else if(strcmp(det->first,"CS") == 0) {
-         csm = (TCSM*) det->second;
-      //} else if(strcmp(det->second->IsA()->GetName(),"TSpice") == 0) {
-         //*spice = *((TSpice*) det->second);
-      //} else if(strcmp(det->second->IsA()->GetName(),"TTip") == 0) {
-         //*tip = *((TTip*) det->second);
-      } else if(strcmp(det->first,"GR") == 0) {
-         griffin = (TGriffin*) det->second;
-      } else if(strcmp(det->first,"SE") == 0) {
-         sceptar = (TSceptar*) det->second;
-      } else if(strcmp(det->first,"DS") == 0) {
-         descant = (TDescant*) det->second;
-      } else if(strcmp(det->first,"PA") == 0) {
-         paces = (TPaces*) det->second;
-      } 
-   }
-   fCurrentAnalysisTree->Fill();
-   
-   //ClearActiveAnalysisTreeBranches();	
-   //Zero the detectors in the detector map
-   for(auto det = detectors->begin(); det != detectors->end(); det++) {
-      delete det->second;
-      det->second = 0;
-   }
-   delete detectors;
-   detectors = 0;
-
-   return;
-}
+*/
 
 void TAnalysisTreeBuilder::CloseAnalysisFile() {
+
+   //what for the server to close....
+   return ;
+
+
+
+
    //Safely close the analysis file.
-   if(!fCurrentAnalysisFile)
-      return;
+//   if(!fCurrentAnalysisFile)
+//      return;
 
    ///******************************////
    ///******************************////
    // this will be removed and put into a seperate thread later.
 
-   printf("Writing file %s\n",fCurrentAnalysisFile->GetName());
+//   printf("Writing file %s\n",fCurrentAnalysisFile->GetName());
    ///******************************////
    ///******************************////
 
-   if(TChannel::GetNumberOfChannels()>0) {
-     TChannel *c = TChannel::GetDefaultChannel();
-     c->Write();
-   }
+//   if(TChannel::GetNumberOfChannels()>0) {
+//     TChannel *c = TChannel::GetDefaultChannel();
+//     c->Write();
+//   }
    //TChannel::DeleteAllChannels();
 
-   fCurrentAnalysisFile->cd();
-   if(fCurrentAnalysisTree)
-      fCurrentAnalysisTree->Write();
-   fCurrentAnalysisFile->Close();
+//   fCurrentAnalysisFile->cd();
+//   if(fCurrentAnalysisTree)
+//      fCurrentAnalysisTree->Write();
+//   fCurrentAnalysisFile->Close();
 
-   fCurrentAnalysisTree = 0;
-   fCurrentAnalysisFile = 0;
-   return;
+//   fCurrentAnalysisTree = 0;
+//   fCurrentAnalysisFile = 0;
+//   return;
 }
 
 
@@ -816,12 +1041,12 @@ void TAnalysisTreeBuilder::ProcessEvent() {
 
 void TAnalysisTreeBuilder::Print(Option_t *opt) {
    //Prints information about the Q's and threads in the AnalysisTreeBuilding process
-   if(fCurrentFragFile && fCurrentAnalysisFile)
-      printf(DMAGENTA " %s/%s" RESET_COLOR  "\n",fCurrentFragFile->GetName(),fCurrentAnalysisFile->GetName());
+//   if(fCurrentFragFile && fCurrentAnalysisFile)
+//      printf(DMAGENTA " %s/%s" RESET_COLOR  "\n",fCurrentFragFile->GetName(),fCurrentAnalysisFile->GetName());
    printf(DMAGENTA " fSortFragmentDone         = %s" RESET_COLOR "\n",fSortFragmentDone ? "true":"false");
    printf(DYELLOW  " TEventQueue::Size()       = %i" RESET_COLOR "\n",TEventQueue::Size());
    printf(DBLUE    " TWriteQueue::Size()       = %i" RESET_COLOR "\n",TWriteQueue::Size());
-   printf(DGREEN   " fFragmentsIn/fAnalysisOut = %i / %i" RESET_COLOR "\n",fFragmentsIn,fAnalysisOut);  
+   printf(DGREEN   " fFragmentsIn/fAnalysisOut = %i / %i" RESET_COLOR "\n",fFragmentsIn,AnalysisOut());  
    printf(GREEN    " std::thread::hardware_concurrency = %u" RESET_COLOR "\n",std::thread::hardware_concurrency());
    printf(DMAGENTA " ==========================================" RESET_COLOR "\n");
    return;
@@ -840,16 +1065,16 @@ void TAnalysisTreeBuilder::Status() {
       if(!sortingDone) {
          printf(DYELLOW HIDE_CURSOR "Fragments: %.1f %%," DBLUE "   %9i built events," DRED "   written: %9i = %.1f %%," 
                 DGREEN "   write speed: %9.1f built events/second." RESET_COLOR " %3.1f seconds." SHOW_CURSOR "\r",
-               (100.*fFragmentsIn)/fEntries, fAnalysisIn, fAnalysisOut, (100.*fAnalysisOut)/fAnalysisIn, fAnalysisOut/w.RealTime(), w.RealTime());
+               (100.*fFragmentsIn)/fEntries, fAnalysisIn, AnalysisOut(), (100.*AnalysisOut())/fAnalysisIn, AnalysisOut()/w.RealTime(), w.RealTime());
       } else {
-         if(fAnalysisOut > 0) {
+         if(AnalysisOut() > 0) {
             printf(DYELLOW HIDE_CURSOR "Fragments: %.1f %%," DBLUE "   %9i built events," DRED "   written: %9i = %.1f %%," 
                    DGREEN "   write speed: %9.1f built events/second." RESET_COLOR "  %.1f seconds, %.1f seconds remaining." SHOW_CURSOR "\r",
-                  (100.*fFragmentsIn)/fEntries, fAnalysisIn, fAnalysisOut, (100.*fAnalysisOut)/fAnalysisIn, fAnalysisOut/w.RealTime(), w.RealTime(), ((double)(fAnalysisIn-fAnalysisOut))/fAnalysisOut*w.RealTime());
+                  (100.*fFragmentsIn)/fEntries, fAnalysisIn, AnalysisOut(), (100.*AnalysisOut())/fAnalysisIn, AnalysisOut()/w.RealTime(), w.RealTime(), ((double)(fAnalysisIn-AnalysisOut()))/AnalysisOut()*w.RealTime());
          } else {
             printf(DYELLOW HIDE_CURSOR "Fragments: %.1f %%," DBLUE "   %9i built events," DRED "   written: %9i = %.1f %%," 
                    DGREEN "   write speed: %9.1f built events/second." RESET_COLOR " %3.1f seconds." SHOW_CURSOR "\r",
-                  (100.*fFragmentsIn)/fEntries, fAnalysisIn, fAnalysisOut, (100.*fAnalysisOut)/fAnalysisIn, fAnalysisOut/w.RealTime(), w.RealTime());
+                  (100.*fFragmentsIn)/fEntries, fAnalysisIn, AnalysisOut(), (100.*AnalysisOut())/fAnalysisIn, AnalysisOut()/w.RealTime(), w.RealTime());
          }
       }
       //we insert a newline (thus preserving the last status), if we just finished getting all fragment, or finished removing fragments from the event queue
@@ -867,14 +1092,14 @@ void TAnalysisTreeBuilder::Status() {
 //   printf(DYELLOW HIDE_CURSOR "%12i / %12ld " RESET_COLOR "/" DBLUE " %12i " RESET_COLOR "/" DCYAN " %12i " RESET_COLOR "/" DRED " %12i " RESET_COLOR "/" DGREEN " %12i " RESET_COLOR
 //          "    processed fragments / # of fragments/ # of events / event queue size / write queue size / events written.\t%.1f seconds." SHOW_CURSOR "\n",
 //          fFragmentsIn, fEntries, fAnalysisIn, TEventQueue::Size(), TWriteQueue::Size(), fAnalysisOut, w.RealTime());
-   if(fAnalysisOut > 0) {
+   if(AnalysisOut() > 0) {
       printf(DYELLOW HIDE_CURSOR "Fragments: %.1f %%," DBLUE "   %9i built events," DRED "   written: %9i = %.1f %%," 
              DGREEN "   write speed: %9.1f built events/second." RESET_COLOR "  %.1f seconds, %.1f seconds remaining." SHOW_CURSOR "\r",
-            (100.*fFragmentsIn)/fEntries, fAnalysisIn, fAnalysisOut, (100.*fAnalysisOut)/fAnalysisIn, fAnalysisOut/w.RealTime(), w.RealTime(), ((double)(fAnalysisIn-fAnalysisOut))/fAnalysisOut*w.RealTime());
+            (100.*fFragmentsIn)/fEntries, fAnalysisIn, AnalysisOut(), (100.*AnalysisOut())/fAnalysisIn, AnalysisOut()/w.RealTime(), w.RealTime(), ((double)(fAnalysisIn-AnalysisOut()))/AnalysisOut()*w.RealTime());
    } else {
       printf(DYELLOW HIDE_CURSOR "Fragments: %.1f %%," DBLUE "   %9i built events," DRED "   written: %9i = %.1f %%," 
              DGREEN "   write speed: %9.1f built events/second." RESET_COLOR " %3.1f seconds." SHOW_CURSOR "\r",
-            (100.*fFragmentsIn)/fEntries, fAnalysisIn, fAnalysisOut, (100.*fAnalysisOut)/fAnalysisIn, fAnalysisOut/w.RealTime(), w.RealTime());
+            (100.*fFragmentsIn)/fEntries, fAnalysisIn, AnalysisOut(), (100.*AnalysisOut())/fAnalysisIn, AnalysisOut()/w.RealTime(), w.RealTime());
    }
 
    return;

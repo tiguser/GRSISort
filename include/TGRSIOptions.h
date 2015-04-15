@@ -32,6 +32,8 @@ namespace TGRSIOptions {
       extern bool fIgnoreFileOdb;
       extern bool fIgnoreEpics;
 
+      extern int  fNumberOfWriteThreads;
+
       }
       std::string GetHostName();
       std::string GetExptName();
@@ -74,6 +76,9 @@ namespace TGRSIOptions {
 
       void SetReadingMaterial(bool flag=true);
       bool ReadingMaterial();
+
+      void SetNumberOfWriteThreads(int num=1);
+      int  GetNumberOfWriteThreads();
 
       void SetHostName(std::string &host);
       void SetExptName(std::string &expt); 

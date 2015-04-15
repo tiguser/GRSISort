@@ -42,6 +42,9 @@
 //#include "TZeroDegree.h"
 #include "TDescant.h"
 
+#define MAXWRITETHREADS 32
+
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // TAnalysisTreeBuilder                                       //
@@ -117,20 +120,23 @@ class TAnalysisTreeBuilder : public TObject {
 
       void InitChannels();
 
-      void SetupOutFile();
-      void SetupAnalysisTree();
+      //void SetupOutFile();
+      //void SetupAnalysisTree();
+      void SetupOutServer();
+      void SetupAnalysisClients();
+
 
       void FillWriteQueue(std::map<const char*, TGRSIDetector*>*);
 
-      void FillAnalysisTree(std::map<const char*, TGRSIDetector*>*);
-      void WriteAnalysisTree();
+      //void FillAnalysisTree(std::map<const char*, TGRSIDetector*>*);
+      //void WriteAnalysisTree();
       void CloseAnalysisFile();
 
       void StartMakeAnalysisTree(int argc=1, char **argv=0);
 
-      void ClearActiveAnalysisTreeBranches();
-      void ResetActiveAnalysisTreeBranches();
-		  void BuildActiveAnalysisTreeBranches(std::map<const char*, TGRSIDetector*>*);
+      //void ClearActiveAnalysisTreeBranches();
+      //void ResetActiveAnalysisTreeBranches();
+		void BuildActiveAnalysisTreeBranches(std::map<const char*, TGRSIDetector*>*);
 
       void Print(Option_t *opt ="");
 
@@ -142,18 +148,29 @@ class TAnalysisTreeBuilder : public TObject {
       static const size_t MEM_SIZE;                      //Sets the minimum amount of memory used to hold the frament tree
 
       static TAnalysisTreeBuilder* fAnalysisTreeBuilder; //Pointer to the AnalysisTreeBuilder
+     
 
       TChain *fFragmentChain;
       TTree  *fCurrentFragTree;
       TFile  *fCurrentFragFile;
-      TTree  *fCurrentAnalysisTree;
-      TFile  *fCurrentAnalysisFile;
+      //TTree  *fCurrentAnalysisTree;
+      //TFile  *fCurrentAnalysisFile;
+      std::string fCurrentAnalysisFileName;
       TGRSIRunInfo *fCurrentRunInfo;
 
       static long fEntries;
       static int fFragmentsIn;
       static int fAnalysisIn;
       static int fAnalysisOut;
+      #ifndef __CINT__
+      static std::mutex m_analysisout;
+      #endif
+      int  AnalysisOut();
+      void AnalysisOutPlusPlus();
+
+      static bool fServerRunning;
+      void FillServer();
+      void FillClient();
 
 #ifndef __CINT__
       bool fSortFragmentDone;
@@ -162,6 +179,8 @@ class TAnalysisTreeBuilder : public TObject {
       std::thread *fProcessThread;                          //The thread used to process and build events
       std::thread *fWriteThread;                            //The thread used to process the write Queue
       std::thread *fStatusThread;                           //The thread used to display the status during sorting
+      std::thread *fFillServerThread;
+      std::thread *fFillClientThreads[MAXWRITETHREADS];   
 #endif
 
    private:
