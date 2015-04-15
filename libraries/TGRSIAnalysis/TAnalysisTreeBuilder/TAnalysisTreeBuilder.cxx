@@ -617,7 +617,7 @@ void TAnalysisTreeBuilder::FillServer() {
           message->ReadTString(filename);
           message->ReadLong64(length);
           delete transient;
-          transient = new TMemFile(filename,message->Buffer()+message->Length(),length,"recreate");
+          transient = new TMemFile("temp.root",message->Buffer()+message->Length(),length,"recreate");
           message->SetBufferOffset(message->Length()+length);
           if(!merger.OutputFile(fCurrentAnalysisFileName.c_str(),"update")) {
              printf("server fail to open outfile.\n");
@@ -764,8 +764,9 @@ void TAnalysisTreeBuilder::FillClient() {
             paces = (TPaces*) det->second;
          } 
       }
- 
+printf("\nbefore fill\n"); 
       fClientAnalysisTree.Fill();
+printf("\nafter fill\n"); 
 
       if(info->Tigress())   { tigress->Clear();} //
       if(info->Sharc())     { sharc->Clear(); }  //
