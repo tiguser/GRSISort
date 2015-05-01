@@ -444,7 +444,7 @@ bool GCanvas::HandleKeyboardPress(Event_t *event,UInt_t *keysym) {
                if(hists.back()->GetListOfFunctions()->At(i)->InheritsFrom("TPeak")) {
                   if(!outfile.is_open())
                      outfile.open(Form("%s.fits",hists.back()->GetName()));
-                  outfile << ((TPeak*)hists.back()->GetListOfFunctions()->At(i))->PrintString();
+                 // outfile << ((TPeak*)hists.back()->GetListOfFunctions()->At(i))->PrintString();
                   outfile << "\n\n";
                }     
             } 
@@ -756,7 +756,7 @@ bool GCanvas::PeakFit(GMarker *m1,GMarker *m2) {
     y[1]=hist->GetBinContent(m1->x); y[0]=hist->GetBinContent(m2->x); 
   }
   //printf("x[0] = %.02f   x[1] = %.02f\n",x[0],x[1]);
-  TPeak* mypeak = new TPeak((x[0]+x[1])/2.0,x[0],x[1]);
+//  TPeak* mypeak = new TPeak((x[0]+x[1])/2.0,x[0],x[1]);
 //  TF1 *gfit = new TF1("gaus","gaus",x[0],x[1]);
 //  hist->Fit(gfit,"QR+");
 
@@ -765,8 +765,8 @@ bool GCanvas::PeakFit(GMarker *m1,GMarker *m2) {
 //  gfit->Delete();
   //hist->GetFunction("gaus")->Delete();
 
-  mypeak->Fit(hist);
-  mypeak->Background()->Draw("SAME");
+//  mypeak->Fit(hist);
+//  mypeak->Background()->Draw("SAME");
   /*
   double param[3];
   double error[3];
@@ -824,7 +824,7 @@ bool GCanvas::PeakFitQ(GMarker *m1,GMarker *m2) {
     y[1]=hist->GetBinContent(m1->x); y[0]=hist->GetBinContent(m2->x); 
   }
   //printf("x[0] = %.02f   x[1] = %.02f\n",x[0],x[1]);
-  TPeak * mypeak = new TPeak((x[0]+x[1])/2.0,x[0],x[1]);
+//  TPeak * mypeak = new TPeak((x[0]+x[1])/2.0,x[0],x[1]);
 /*  if(hist->FindObject(mypeak->GetName())){
      //delete mypeak;
      mypeak = (TPeak*)(hist->FindObject(mypeak->GetName()));
@@ -836,7 +836,7 @@ bool GCanvas::PeakFitQ(GMarker *m1,GMarker *m2) {
   
 //  gfit->Delete();
   //hist->GetFunction("gaus")->Delete();
-
+/*
   mypeak->Fit(hist,"Q+");
   TPeak *peakfit = (TPeak*)(hist->GetListOfFunctions()->Last());
   //hist->GetListOfFunctions()->Print();
@@ -846,7 +846,7 @@ bool GCanvas::PeakFitQ(GMarker *m1,GMarker *m2) {
   }
   mypeak->Background()->Draw("SAME");
   mypeak->Print();
-  
+  */
      
 /* 
   double param[10];
@@ -872,6 +872,7 @@ bool GCanvas::PeakFitQ(GMarker *m1,GMarker *m2) {
  // printf("Area:      % 4.02f  +/- %.02f\n",
  //        integral - (bg->Integral(x[0],x[1])/hist->GetBinWidth(1)),int_err);
  */ 
+
   return true;
   
 }

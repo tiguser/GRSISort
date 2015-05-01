@@ -19,7 +19,7 @@
 
 #include <thread>
 
-ClassImp(TGRSIint)
+//ClassImp(TGRSIint)
 
 extern void PopupLogo(bool);
 extern void WaitLogo();

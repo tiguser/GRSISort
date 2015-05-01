@@ -60,6 +60,7 @@ typedef char int8_t;
 #endif
 #include <stdint.h> 
 
+#include "RTypes.h"
 #include <string>
 #include <cstdio>
 #include <cstdlib>

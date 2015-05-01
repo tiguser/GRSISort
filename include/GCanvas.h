@@ -3,7 +3,8 @@
 
 #include "TCanvas.h"
 #include "TRootCanvas.h"
-#include "TPeak.h"
+#include "TF1.h"
+//#include "TPeak.h"
 
 #include "TLine.h"
 

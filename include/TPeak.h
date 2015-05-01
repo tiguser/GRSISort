@@ -4,6 +4,7 @@
 #include "TGRSIFunctions.h"
 #include "TGRSIFit.h"
 #include "TF1.h"
+#include "TFormula.h"
 #include "TFitResultPtr.h"
 #include "TFitResult.h"
 #include <string>
@@ -42,7 +43,7 @@ class TPeak : public TGRSIFit {
   // Bool_t Fit(TH1* fithist = 0);
 
    Double_t GetCentroid() const     { return GetParameter("centroid"); }
-   Double_t GetCentroidErr() const  { return GetParError(GetParNumber("centroid")); }
+   Double_t GetCentroidErr() const  { return GetParError(fParams->GetParNumber("centroid")); }
    Double_t GetArea() const         { return farea; }
    Double_t GetAreaErr() const      { return fd_area; }
 /*

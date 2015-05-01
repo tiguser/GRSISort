@@ -1,5 +1,5 @@
 
-OBJECTS = TGRSIFunctions.o TGRSIFunctionsDict.o TGRSIFit.o TGRSIFitDict.o TPeak.o TPeakDict.o 
+OBJECTS = TGRSIFunctions.o TGRSIFit.o TPeak.o TPeakDict.o TGRSIFunctionsDict.o TGRSIFitDict.o 
 
 CFLAGS += -fPIC
 
@@ -46,7 +46,7 @@ all: libTGRSIFit.so
 
 %Dict.cxx: $(BASE)/include/%.h
 	@printf " ${COM_COLOR}%s${DICT_COLOR}%s${NO_COLOR}" $(COMP_STRING) $@
-	@rootcint -f $@ -c $^ 2> temp.log || touch temp.errors
+	@rootcling -f $@ -c $^ 2> temp.log || touch temp.errors
 	@if test -e temp.errors; then \
 		printf "\r ${COM_COLOR}%s${DICT_COLOR}%-30s ${ERROR_COLOR}%*s${NO_COLOR}\n" $(COMP_STRING) $@ 10 $(ERROR_STRING) \
 		&& $(CAT) temp.log && \

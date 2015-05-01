@@ -41,10 +41,10 @@ LIBS += -lGRSIFormat
 LIBS += -lNucleus
 LIBS += -lKinematics
 LIBS += -lSRIM
-LIBS += -lTCal
-LIBS += -lTGRSIFit
+#LIBS += -lTCal
+#LIBS += -lTGRSIFit
 
-DETLIBS =  -lTigress
+#DETLIBS =  -lTigress
 DETLIBS += -lSharc
 DETLIBS += -lTriFoil
 #DETLIBS += -lRf
@@ -53,7 +53,7 @@ DETLIBS += -lCSM
 #DETLIBS += -lS3
 #DETLIBS += -lTip
 
-DETLIBS += -lGriffin
+#DETLIBS += -lGriffin
 DETLIBS += -lSceptar
 DETLIBS += -lPaces
 #DETLIBS += -lDante

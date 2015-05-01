@@ -1,5 +1,5 @@
 
-OBJECTS = TCal.o TCalDict.o TEfficiencyCal.o TEfficiencyCalDict.o TEnergyCal.o TEnergyCalDict.o TGainMatch.o TGainMatchDict.o TCFDCal.o TCFDCalDict.o TTimeCal.o TTimeCalDict.o TCalManager.o TCalManagerDict.o
+OBJECTS = TCal.o TEfficiencyCal.o TEnergyCal.o TGainMatch.o TCFDCal.o TTimeCal.o TCalManager.o TCalDict.o TEfficiencyCalDict.o TEnergyCalDict.o TGainMatchDict.o TCFDCalDict.o TTimeCalDict.o TCalManagerDict.o 
 
 CFLAGS += -fPIC
 
@@ -46,7 +46,7 @@ all: libTCal.so
 
 %Dict.cxx: $(BASE)/include/%.h
 	@printf " ${COM_COLOR}%s${DICT_COLOR}%s${NO_COLOR}" $(COMP_STRING) $@
-	@rootcint -f $@ -c $^ 2> temp.log || touch temp.errors
+	@rootcling -f $@ -c $^ 2> temp.log || touch temp.errors
 	@if test -e temp.errors; then \
 		printf "\r ${COM_COLOR}%s${DICT_COLOR}%-30s ${ERROR_COLOR}%*s${NO_COLOR}\n" $(COMP_STRING) $@ 10 $(ERROR_STRING) \
 		&& $(CAT) temp.log && \
