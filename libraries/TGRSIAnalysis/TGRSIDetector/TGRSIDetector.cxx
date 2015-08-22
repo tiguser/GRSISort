@@ -16,6 +16,9 @@ ClassImp(TGRSIDetector)
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
+TVector3 TGRSIDetectorHit::beam(0,0,1);
+
+
 TGRSIDetector::TGRSIDetector():TObject(){
    //Default constructor.
 #if MAJOR_ROOT_VERSION < 6

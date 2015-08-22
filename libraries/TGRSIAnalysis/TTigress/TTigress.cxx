@@ -108,6 +108,16 @@ void TTigress::FillData(TFragment *frag, TChannel *channel, MNEMONIC *mnemonic) 
 }
 
 
+double TTigressHit::GetDoppler(double beta,TVector3 *vec=0) { 
+  bool madevec = false;
+  if(vec==0) {
+    vec = &beam;
+  }
+  double gamma = 1/(sqrt(1-pow(beta,2)));
+  return this->GetEnergy()*gamma*(1-beta*TMath::Cos(this->GetPosition().Angle(*vec)));
+}
+
+
 void TTigress::FillBGOData(TFragment *frag, TChannel *channel, MNEMONIC *mnemonic) {
    if(SetBGOHits()) {
 	   if(!bgodata)

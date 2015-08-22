@@ -26,7 +26,7 @@ class TGRSIDetector;
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-class TGRSIDetectorHit : public TObject 	{
+class TGRSIDetectorHit : public TObject   {
    // The bare bones; stuff all detecotors need.  
    // 1. An address.         The whoami for the detector. This is the value used by TChannel::GetChannel(address);
    // 2. An "Energy value."  What this is left the parent class, but it is going to return a double.
@@ -42,18 +42,18 @@ class TGRSIDetectorHit : public TObject 	{
    //                        may not allows be present, put it is echoed enough that the storage for it belongs here.
 
 
-	public:
-		TGRSIDetectorHit(const int &fAddress=0xffffffff);    //{ address=fAddress; }
-		TGRSIDetectorHit(const TGRSIDetectorHit&);
-		virtual ~TGRSIDetectorHit();
+  public:
+    TGRSIDetectorHit(const int &fAddress=0xffffffff);    //{ address=fAddress; }
+    TGRSIDetectorHit(const TGRSIDetectorHit&);
+    virtual ~TGRSIDetectorHit();
 
-	public:
+  public:
       virtual void Copy(TGRSIDetectorHit &) const;    //!
       virtual void Clear(Option_t* opt = "");         //!
-      virtual void Print(Option_t* opt = "") const;	//!
+      virtual void Print(Option_t* opt = "") const;  //!
       static bool CompareEnergy(TGRSIDetectorHit *lhs, TGRSIDetectorHit *rhs);
       //We need a common function for all detectors in here
-		//static bool Compare(TGRSIDetectorHit *lhs,TGRSIDetectorHit *rhs); //!
+    //static bool Compare(TGRSIDetectorHit *lhs,TGRSIDetectorHit *rhs); //!
 
       inline void SetPosition(const TVector3& temp_pos)           { position = temp_pos; }    //!
       inline void SetAddress(const UInt_t &temp_address)          { address = temp_address; } //!
@@ -83,16 +83,16 @@ class TGRSIDetectorHit : public TObject 	{
    //   inline TGRSIDetector *GetParent() const               { return ((TGRSIDetector*)parent.GetObject()); } //!
       //virtual void SetHit() { AbstractMethod("SetHit()");}
       //We need a common function for all detectors in here
-		//static bool Compare(TGRSIDetectorHit *lhs,TGRSIDetectorHit *rhs); //!
+    //static bool Compare(TGRSIDetectorHit *lhs,TGRSIDetectorHit *rhs); //!
 
    protected:
-      UInt_t     address;  //address of the the channel in the DAQ.
-      Double_t  charge;   //charge collected from the hit
-      Int_t     cfd;     // CFD time of the Hit
-      ULong_t    time;    // Timsstamp given to hit
-      UInt_t    detector; //! Detector Number
-      TVector3  position; //! Position of hit detector.
-      Double_t  energy;   //! Energy of the Hit.
+      UInt_t   address;  //  address of the the channel in the DAQ.
+      Double_t charge;   //  charge collected from the hit
+      Int_t    cfd;      //  CFD time of the Hit
+      ULong_t  time;     //  Timsstamp given to hit
+      UInt_t   detector; //! Detector Number
+      TVector3 position; //! Position of hit detector.
+      Double_t energy;   //! Energy of the Hit.
    //   TRef      parent;   // pointer to the mother class;
      std::vector<Short_t> waveform;  //
       //Bool_t fHitSet;    //!
@@ -107,7 +107,9 @@ class TGRSIDetectorHit : public TObject 	{
       //Bool_t fPosSet;//!
       //Bool_t fEnergySet;//!
 
-	ClassDef(TGRSIDetectorHit,3) //Stores the information for a detector hit
+      static TVector3 beam;   //!
+
+  ClassDef(TGRSIDetectorHit,3) //Stores the information for a detector hit
 };
 
 
