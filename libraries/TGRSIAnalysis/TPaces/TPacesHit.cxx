@@ -50,12 +50,12 @@ void TPacesHit::Clear(Option_t *opt)	{
 
 
 void TPacesHit::Print(Option_t *opt) const	{
-   printf("Paces Detector: %i\n",GetDetector());
-   printf("Paces Energy:   %lf\n",GetEnergy());
-	printf("Paces hit time:   %f\n",GetTime());
+   printf("Paces Detector:  %i\n",GetDetector());
+   printf("Paces Energy:    %lf\n",GetEnergy());
+   printf("Paces hit time:  %lu\n",GetTime());
 }
 
-double TPacesHit::GetTime(Option_t *opt) const {
+ULong_t TPacesHit::GetTime(Option_t *opt) const {
   //still need to figure out how to handle the times
   return time;
 }

@@ -9,8 +9,6 @@
 
 #include "TFragment.h"
 #include "TChannel.h"
-#include "TCrystalHit.h"
-//#include "TTigress.h"
 
 #include "TMath.h"
 #include "TVector3.h"
@@ -33,7 +31,7 @@ class TTigressHit : public TGRSIDetectorHit {
 
     //TGRSIDetectorHit core;  this!
     std::vector<TGRSIDetectorHit> segments;
-    std::vector<TGRSIDetectorHit> bgo;
+    std::vector<TGRSIDetectorHit> bgos;
   
     //need to do sudo tracking to build addback.
     TVector3 lasthit;                //!
@@ -45,8 +43,8 @@ class TTigressHit : public TGRSIDetectorHit {
     void SetHit() {}
     /////////////////////////    /////////////////////////////////////
     void SetCore(TGRSIDetectorHit &core)      { Copy(core); }               //!
-    void AddSegment(TGRSIDetectorHit &seg)    { segment.push_back(temp);  } //!
-    void AddBGO(TGRSIDetectorHit &bgo)        { bgo.push_back(temp);  }     //!
+    void AddSegment(TGRSIDetectorHit &seg)    { segments.push_back(seg);  } //!
+    void AddBGO(TGRSIDetectorHit &bgo)        { bgos.push_back(bgo);  }     //!
 
     /////////////////////////    /////////////////////////////////////
     inline int GetInitialHit()           {  return first_segment;  }      //!
@@ -55,10 +53,10 @@ class TTigressHit : public TGRSIDetectorHit {
 
     inline double GetDoppler(double beta,TVector3 *vec=0); 
 
-    inline int GetSegmentMultiplicity() { return segment.size(); } //!
-    inline int GetBGOMultiplicity()     { return bgo.size();     } //!
-    inline TGRSIDetectorHit &GetSegment(const int &i) const { return segment.at(i);}
-    inline TGRSIDetectorHit &GetBGO(const int &i) const     { return bgo.At(i);  }  
+    inline int GetSegmentMultiplicity() { return segments.size(); } //!
+    inline int GetBGOMultiplicity()     { return bgos.size();     } //!
+    inline TGRSIDetectorHit &GetSegment(const int &i)       { return segments.at(i);}
+    inline TGRSIDetectorHit &GetBGO(const int &i)           { return bgos.at(i);  }  
     inline TGRSIDetectorHit &GetCore()                      { return *this;  } 
 
     void CheckFirstHit(int charge,int segment);                    //!

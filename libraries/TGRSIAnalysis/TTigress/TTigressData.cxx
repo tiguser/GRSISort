@@ -28,6 +28,11 @@ void TTigressData::Clear(Option_t *opt)  {
   fSeg_Core_Nbr.clear();
   fSegment_Nbr.clear();  
   fSegment_Frag.clear();
+  
+  fBgo_Clover_Nbr.clear();
+  fBgo_Core_Nbr.clear();
+  fBgo_Nbr.clear();  
+  fBgo_Frag.clear();
 }
 
 void TTigressData::Print(Option_t *opt) const {

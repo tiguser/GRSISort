@@ -33,22 +33,22 @@ class TGRSIDetectorHit;
 ////////////////////////////////////////////////////////////////
 
 
-class TGRSIDetector : public TObject	{
-	public:
-		TGRSIDetector();
-		TGRSIDetector(const TGRSIDetector&);
-		virtual ~TGRSIDetector();
+class TGRSIDetector : public TObject  {
+  public:
+    TGRSIDetector();
+    TGRSIDetector(const TGRSIDetector&);
+    virtual ~TGRSIDetector();
 
-	public: 
+  public: 
    //   virtual TGRSIDetectorHit* GetHit(const Int_t idx = 0) { AbstractMethod("GetHit()"); return 0;}
-		virtual void BuildHits(TGRSIDetectorData *data=0,Option_t * = "") { AbstractMethod("BuildHits()"); } //! = 0; //!
-		virtual void FillData(TFragment*,TChannel*,MNEMONIC*)             { AbstractMethod("FillData()");  } //! = 0; //!
+    virtual void BuildHits(TGRSIDetectorData *data=0,Option_t * = "") { AbstractMethod("BuildHits()"); } //! = 0; //!
+    virtual void FillData(TFragment*,TChannel*,MNEMONIC*)             { AbstractMethod("FillData()");  } //! = 0; //!
 
-      virtual void Copy(TGRSIDetector&) const;        //!
-      virtual void Clear(Option_t *opt = "");         //!
-		virtual void Print(Option_t *opt = "") const;   //!
+    virtual void Copy(TGRSIDetector&) const;        //!
+    virtual void Clear(Option_t *opt = "");         //!
+    virtual void Print(Option_t *opt = "") const;   //!
 
-      void AddHit(TGRSIDetectorHit *hit,Option_t *opt ="");
+    virtual void AddHit(TGRSIDetectorHit *hit,Option_t *opt ="");
 //      virtual void AddHit(TGRSIDetectorHit* hit, Option_t *opt ="") {}        //!
 
     //  void Init();

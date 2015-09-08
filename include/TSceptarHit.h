@@ -6,7 +6,6 @@
 
 #include "TFragment.h"
 #include "TChannel.h"
-#include "TCrystalHit.h"
 
 #include "TVector3.h"
 
@@ -57,7 +56,8 @@ class TSceptarHit : public TGRSIDetectorHit {
 		/////////////////////////		/////////////////////////////////////
       inline Int_t    GetFilterPattern()    const     { return filter;   }  //!
       TVector3 GetPosition(Double_t dist = 0) const; //!
-      double GetTime(Option_t * opt = "") const; //!
+      //double GetTime(Option_t * opt = "") const; //!
+      ULong_t  GetTime(Option_t * opt = "") const; //!
   //    inline std::vector<Short_t> GetWaveform() 		{ return waveform; }  //!
 
       Int_t CalculateCfd(double attenuation, int delay, int halfsmoothingwindow, int interpolation_steps); //!

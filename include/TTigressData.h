@@ -25,6 +25,12 @@ class TTigressData : public TGRSIDetectorData {
     std::vector<UShort_t>  fSegment_Nbr;    //!
     std::vector<TFragment> fSegment_Frag;   //! 
 
+    std::vector<UShort_t>  fBgo_Clover_Nbr;  //!
+    std::vector<UShort_t>  fBgo_Core_Nbr;   //!
+    std::vector<UShort_t>  fBgo_Nbr;        //!
+    std::vector<TFragment> fBgo_Frag;       //!
+
+
     static bool fIsSet; //!
 
   public:
@@ -45,7 +51,7 @@ class TTigressData : public TGRSIDetectorData {
     inline void SetCore(const UShort_t &CloverNbr, const UShort_t &CoreNbr, const TFragment &CoreFrag)  {
       SetCloverNumber(CloverNbr);
       SetCoreNumber(CoreNbr);
-      SetCoreFrag(CoreFrag);    
+      SetCoreFragment(CoreFrag);    
     }  //!
 
     inline void SetCore(TFragment *frag,TChannel *channel,MNEMONIC *mnemonic)  {
@@ -64,7 +70,7 @@ class TTigressData : public TGRSIDetectorData {
         CoreNbr=3;
 
       GetCoreSet().insert(mnemonic->arrayposition*60+CoreNbr);
-      SetCore(mnemonic->Arrayposition,CoreNbr,*frag);
+      SetCore(mnemonic->arrayposition,CoreNbr,*frag);
     }; //! 
 
 
@@ -91,22 +97,59 @@ class TTigressData : public TGRSIDetectorData {
         CoreNbr=2;
       else if(mnemonic->arraysubposition.compare(0,1,"W")==0)
         CoreNbr=3;
-      SeteSegment(mnemonic->arrayposition,CoreNbr,mnemonic->segment,*frag);
+      SetSegment(mnemonic->arrayposition,CoreNbr,mnemonic->segment,*frag);
     }; 
 
 
-    inline UShort_t GetCloverNumber(const unsigned int &i)  { return fClover_Nbr.at(i);} //!
-    inline UShort_t GetCoreNumber(const unsigned int &i)    { return fCore_Nbr.at(i);  } //!
-    inline Double_t GetCoreFragment(const unsigned int &i)  { return fCore_Frag.at(i); } //!
+    inline void SetBgoCloverNumber(const UShort_t  &CloverNumber)  { fBgo_Clover_Nbr.push_back(CloverNumber);}  //!
+    inline void SetBgoCoreNumber(const   UShort_t  &CoreNumber)    { fBgo_Core_Nbr.push_back(CoreNumber);    }  //!
+    inline void SetBgoNumber(const   UShort_t  &BgoNumber) { fBgo_Nbr.push_back(BgoNumber);  }  //!
+    inline void SetBgoFragment(const TFragment &BgoFrag)   { fBgo_Frag.push_back(BgoFrag);   }  //!
 
-    inline UShort_t GetSegCloverNumber(const unsigned int &i) {return fSeg_Clover_Nbr.at(i);} //!
-    inline UShort_t GetSegCoreNumber(const unsigned int &i)   {return fSeg_Core_Nbr.at(i);}   //!
-    inline UShort_t GetSegmentNumber(const unsigned int &i)   {return fSegment_Nbr.at(i);}    //!
-    inline Double_t GetSegmentFragment(const unsigned int &i) {return fSegment_Frag.at(i);}   //!
+
+    inline void SetBgo(const UShort_t &BgoCloverNbr, const UShort_t &BgoCoreNbr, const UShort_t &BgoNumber,const TFragment &BgoFrag)  {
+      SetBgoCloverNumber(BgoCloverNbr);
+      SetBgoCoreNumber(BgoCoreNbr);
+      SetBgoNumber(BgoNumber);
+      SetBgoFragment(BgoFrag);
+    }  //!
+
+
+    inline void SetBgo(TFragment *frag,TChannel *channel,MNEMONIC *mnemonic)  {
+      if(!frag || !channel || !mnemonic) return;
+      UShort_t CoreNbr=5;
+      if(mnemonic->arraysubposition.compare(0,1,"B")==0)
+        CoreNbr=0;
+      else if(mnemonic->arraysubposition.compare(0,1,"G")==0)
+        CoreNbr=1;
+      else if(mnemonic->arraysubposition.compare(0,1,"R")==0)
+        CoreNbr=2;
+      else if(mnemonic->arraysubposition.compare(0,1,"W")==0)
+        CoreNbr=3;
+      SetBgo(mnemonic->arrayposition,CoreNbr,mnemonic->segment,*frag);
+    }; 
+
+
+
+
+    inline UShort_t  GetCloverNumber(const unsigned int &i)  { return fClover_Nbr.at(i);} //!
+    inline UShort_t  GetCoreNumber(const unsigned int &i)    { return fCore_Nbr.at(i);  } //!
+    inline TFragment GetCoreFragment(const unsigned int &i)  { return fCore_Frag.at(i); } //!
+
+    inline UShort_t  GetSegCloverNumber(const unsigned int &i) {return fSeg_Clover_Nbr.at(i);} //!
+    inline UShort_t  GetSegCoreNumber(const unsigned int &i)   {return fSeg_Core_Nbr.at(i);}   //!
+    inline UShort_t  GetSegmentNumber(const unsigned int &i)   {return fSegment_Nbr.at(i);}    //!
+    inline TFragment GetSegmentFragment(const unsigned int &i) {return fSegment_Frag.at(i);}   //!
+
+
+    inline UShort_t  GetBgoCloverNumber(const unsigned int &i) {return fBgo_Clover_Nbr.at(i);} //!
+    inline UShort_t  GetBgoCoreNumber(const unsigned int &i)   {return fBgo_Core_Nbr.at(i);}   //!
+    inline UShort_t  GetBgoNumber(const unsigned int &i)       {return fBgo_Nbr.at(i);}        //!
+    inline TFragment GetBgoFragment(const unsigned int &i)     {return fBgo_Frag.at(i);}       //!
 
     inline unsigned int GetCoreMultiplicity()    { return fCore_Nbr.size();    }  //!
     inline unsigned int GetSegmentMultiplicity() { return fSegment_Nbr.size(); }  //!
-    
+    inline unsigned int GetBgoMultiplicity()     { return fBgo_Nbr.size();     }  //!
 };
 
 

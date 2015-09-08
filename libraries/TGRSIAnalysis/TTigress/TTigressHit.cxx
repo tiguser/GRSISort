@@ -24,7 +24,7 @@ void TTigressHit::Clear(Option_t *opt)  {
   crystal         = -1;
 
   segment.clear();
-  bgo.clear();
+  bgos.clear();
 }
 
 void TTigressHit::Copy(TTigressHit &rhs) const {

@@ -113,7 +113,7 @@ UInt_t TGRSIDetectorHit::GetDetector() const {
    ParseMNEMONIC(channel->GetChannelName(),&mnemonic);
    return mnemonic.arrayposition;
 }
-
+/*
 UInt_t TGRSIDetectorHit::GetDetector() {
    if(is_det_set)
       return detector;
@@ -128,7 +128,7 @@ UInt_t TGRSIDetectorHit::GetDetector() {
    ParseMNEMONIC(channel->GetChannelName(),&mnemonic);
    return SetDetector(mnemonic.arrayposition);
 }
-
+*/
 
 UInt_t TGRSIDetectorHit::SetDetector(UInt_t det) {
    detector = det;
