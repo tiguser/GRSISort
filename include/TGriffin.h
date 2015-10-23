@@ -23,6 +23,16 @@ class TGriffinData;
 
 
 class TGriffin : public TGRSIDetector {
+	enum EGriffinBits {
+		kIsAddbackSet = 1<<0,
+		kBit1         = 1<<1,
+		kBit2         = 1<<2,
+		kBit3         = 1<<3,
+		kBit4         = 1<<4,
+		kBit5         = 1<<5,
+		kBit6         = 1<<6,
+		kBit7         = 1<<7
+	};
 
    public:
       TGriffin();
@@ -30,7 +40,7 @@ class TGriffin : public TGRSIDetector {
       virtual ~TGriffin();
 
    public:
-      void BuildHits(TGRSIDetectorData *data =0,Option_t *opt = ""); //!
+      void BuildHits(TDetectorData *data =0,Option_t *opt = ""); //!
 
       TGriffinHit *GetGriffinHit(const int i); //!
       TGRSIDetectorHit* GetHit(const Int_t idx = 0);
@@ -40,18 +50,19 @@ class TGriffin : public TGRSIDetector {
       void FillData(TFragment*,TChannel*,MNEMONIC*); //!
 
       TGriffin& operator=(const TGriffin&);  //!
-
-      //void AddHit(TGriffinHit *hit) { griffin_hits.push_back(*hit); }
-
+      
 #ifndef __CINT__
-      void SetAddbackCriterion(std::function<bool(TGriffinHit&, TGriffinHit&)> criterion) { addback_criterion = criterion; }
-      std::function<bool(TGriffinHit&, TGriffinHit&)> GetAddbackCriterion() const { return addback_criterion; }
+      void SetAddbackCriterion(std::function<bool(TGriffinHit&, TGriffinHit&)> criterion) { fAddback_criterion = criterion; }
+      std::function<bool(TGriffinHit&, TGriffinHit&)> GetAddbackCriterion() const { return fAddback_criterion; }
 #endif
 
       Int_t GetAddbackMultiplicity();
       TGriffinHit* GetAddbackHit(const int i);
 
    private:
+#ifndef __CINT__
+      static std::function<bool(TGriffinHit&, TGriffinHit&)> fAddback_criterion;
+#endif
       TGriffinData *grifdata;                 //!  Used to build GRIFFIN Hits
       //TBGOData     *bgodata;                  //!  Used to build BGO Hits
       std::vector <TGriffinHit> griffin_hits; //  The set of crystal hits
@@ -62,48 +73,33 @@ class TGriffin : public TGRSIDetector {
       //static bool fSetBGOWave;		            //!  Flag for BGO Waveforms ON/OFF
 
       long fCycleStart;                //!  The start of the cycle
-      static long fLastPPG;                   //!  value of the last ppg
+      UChar_t fGriffinBits;            // Transient member flags
 
-      enum  GriffinFlags{kCycleStartTime,kTapeMove,kBackGround,kBeamOn,kDecay};
-      TBits fGriffinBits;
-
-      std::vector <TGriffinHit> addback_hits; //! Used to create addback hits on the fly
-      static std::function<bool(TGriffinHit&, TGriffinHit&)> addback_criterion;
+      std::vector <TGriffinHit> fAddback_hits; //! Used to create addback hits on the fly
+      std::vector <UShort_t> fAddback_frags; //! Number of crystals involved in creating in the addback hit
 
    public:
       static bool SetCoreWave()        { return fSetCoreWave;  }	//!
       //static bool SetBGOHits()       { return fSetBGOHits;   }	//!
       //static bool SetBGOWave()	    { return fSetBGOWave;   } //!
 
-      void SetTapeMove(Bool_t flag=kTRUE)   { fGriffinBits.SetBitNumber(kTapeMove,flag); }  //!
-      void SetBackground(Bool_t flag=kTRUE) { fGriffinBits.SetBitNumber(kBackGround,flag);} //!
-      void SetBeamOn(Bool_t flag=kTRUE)     { fGriffinBits.SetBitNumber(kBeamOn,flag);}     //!
-      void SetDecay(Bool_t flag=kTRUE)      { fGriffinBits.SetBitNumber(kDecay,flag);}      //!
-
-      bool GetTapeMove()   const { return fGriffinBits.TestBitNumber(kTapeMove);}//!
-      bool GetBackground() const { return fGriffinBits.TestBitNumber(kBackGround);}//!
-      bool GetBeamOn()     const { return fGriffinBits.TestBitNumber(kBeamOn);}//!
-      bool GetDecay()      const { return fGriffinBits.TestBitNumber(kDecay);}//!
-
-      int GetCycleTimeInMilliSeconds(long time) { return (int)((time-fCycleStart)/1e5); }//!
-
-      //  void AddHit(TGRSIDetectorHit *hit,Option_t *opt="");//!
    private:
       static TVector3 gCloverPosition[17];               //! Position of each HPGe Clover
-      void ClearStatus() { fGriffinBits.ResetAllBits(kFALSE); } //!
+      void ClearStatus() { fGriffinBits = 0; } //!
+      void SetBitNumber(enum EGriffinBits bit,Bool_t set);
+      Bool_t TestBitNumber(enum EGriffinBits bit) const {return (bit & fGriffinBits);}
 
    public:
       virtual void Copy(TGriffin&) const;                //!
       virtual void Clear(Option_t *opt = "all");		     //!
       virtual void Print(Option_t *opt = "") const;		  //!
-      void ResetAddback() { addback_hits.clear(); }		     //!
+      void ResetAddback();		     //!
+      UShort_t GetNAddbackFrags(int idx) const;
 
    protected:
       void PushBackHit(TGRSIDetectorHit* ghit);
 
-      ClassDef(TGriffin,2)  // Griffin Physics structure
-
-
+      ClassDef(TGriffin,3)  // Griffin Physics structure
 };
 
 #endif

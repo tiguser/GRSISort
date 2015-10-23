@@ -1,5 +1,26 @@
 #include "TCal.h"
 
+
+#include "Varargs.h"
+#include "TNamed.h"
+#include "TList.h"
+#include "TFitResult.h"
+#include "TFitResultPtr.h"
+#include "TRandom.h"
+#include "TSpectrum.h"
+#include "TVirtualFitter.h"
+#include "TMath.h"
+#include "TCanvas.h"
+#include <map>
+#include <utility>
+#include "TROOT.h"
+#include "TMultiGraph.h"
+//#include "../include/TNucleus.h"
+
+#include "../include/TGRSITransition.h"
+
+
+
 ClassImp(TCal)
 ////////////////////////////////////////////////////////////////
 //                                                            //

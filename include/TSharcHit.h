@@ -40,6 +40,7 @@ class TFragment;
 class TSharcHit : public TGRSIDetectorHit {
   public:
     TSharcHit();
+    TSharcHit(const TSharcHit&);
     ~TSharcHit();
   
   private:
@@ -53,7 +54,7 @@ class TSharcHit : public TGRSIDetectorHit {
 
 
   public:
-    virtual void Copy(TGRSIDetector &) const;  //!
+    virtual void Copy(TObject &) const;        //!
     virtual void Clear(Option_t* = "");        //!
     virtual void Print(Option_t* = "")  const; //!
     
@@ -82,12 +83,12 @@ class TSharcHit : public TGRSIDetectorHit {
 
     //std::pair<int,int>  GetPixel()  { return std::make_pair(front_strip,back_strip);  }  //!
 
-    const Double_t    GetFrontCharge()      { return GetFront()->GetCharge();  }  //!  //Charge is now stored after integration.
-    const Double_t    GetBackCharge()       { return GetBack()->GetCharge();   }  //!  //Charge is now stored after integration.
-    const Double_t    GetPadCharge()        { return GetPad()->GetCharge();    }  //!  //Charge is now stored after integration.
+    const Float_t    GetFrontCharge()        { return GetFront()->GetCharge();  }  //!  //Charge is now stored after integration.
+    const Float_t    GetBackCharge()         { return GetBack()->GetCharge();   }  //!  //Charge is now stored after integration.
+    const Float_t    GetPadCharge()          { return GetPad()->GetCharge();    }  //!  //Charge is now stored after integration.
 
     Double_t GetEnergy()             { return GetFront()->GetEnergy() + GetPad()->GetEnergy(); }
-    ULong_t  GetTime()               { return GetFront()->GetTime(); }
+    ULong_t  GetTimeStamp()               { return GetFront()->GetTime(); }
 
     TVector3 GetPosition() const;
    
@@ -104,9 +105,9 @@ class TSharcHit : public TGRSIDetectorHit {
     void SetFrontStrip(const UShort_t &strip)   { front_strip    = strip; }  //!
     void SetBackStrip(const UShort_t &strip)    { back_strip     = strip; }  //!
 
-    void SetFront(const TFragment *frag); //!  
-    void SetBack (const TFragment *frag); //!
-    void SetPad  (const TFragment *frag); //!
+    void SetFront(const TFragment &frag); //!  
+    void SetBack (const TFragment &frag); //!
+    void SetPad  (const TFragment &frag); //!
     
 
   ClassDef(TSharcHit,6)

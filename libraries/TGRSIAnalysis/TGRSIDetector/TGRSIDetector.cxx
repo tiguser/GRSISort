@@ -19,7 +19,7 @@ ClassImp(TGRSIDetector)
 TVector3 TGRSIDetectorHit::beam(0,0,1);
 
 
-TGRSIDetector::TGRSIDetector():TObject(){
+TGRSIDetector::TGRSIDetector():TDetector(){
    //Default constructor.
 #if MAJOR_ROOT_VERSION < 6
    Class()->IgnoreTObjectStreamer(kTRUE);
@@ -43,9 +43,13 @@ void TGRSIDetector::AddHit(TGRSIDetectorHit *hit,Option_t *opt) {
   return;
 }
 
-void TGRSIDetector::Copy(TGRSIDetector &rhs) const {
-   TObject::Copy((TObject&)rhs);
+void TGRSIDetector::Copy(TObject &rhs) const {
+  //if(!rhs.InheritsFrom("TGRSIDetector"))
+  //   return;
+  TObject::Copy((TObject&)rhs);
+  
 }
+
 
 void TGRSIDetector::Print(Option_t *opt) const {
 // Default print statement for TGRSIDetector. Currently does

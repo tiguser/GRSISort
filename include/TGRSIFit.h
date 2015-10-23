@@ -14,8 +14,12 @@
 #include "TMath.h"
 #include "TNamed.h"
 #include "TROOT.h"
+#ifndef __CINT__
 #include <utility>
+#endif
 #include "TRef.h"
+#include "TString.h"
+#include "Globals.h"
 
 using namespace TGRSIFunctions;
 
@@ -42,6 +46,14 @@ class TGRSIFit : public TF1 {
    Bool_t IsGoodFit() const { return goodfit_flag; }
    virtual void SetHist(TH1* hist){fhist = hist;} //fHistogram is a member of TF1. I'm not sure this does anything proper right now
    virtual TH1* GetHist() const { return (TH1*)(fhist.GetObject());}
+   static const char* GetDefaultFitType(){ return fDefaultFitType.Data(); }
+   static void SetDefaultFitType(const char* fittype){ fDefaultFitType = fittype; }
+
+   //These are only to be called in the Dtor of classes to protect from ROOT's insane garbage collection system
+   //They can be called anywhere though as long as new classes are carefully destructed. 
+   Bool_t AddToGlobalList(Bool_t on = kTRUE);
+   static Bool_t AddToGlobalList(TF1* func, Bool_t on = kTRUE);
+
  protected:
    Bool_t IsInitialized() const { return init_flag; }
    void SetInitialized(Bool_t flag = true) {init_flag = flag;}
@@ -51,10 +63,13 @@ class TGRSIFit : public TF1 {
    Bool_t init_flag;
    Bool_t goodfit_flag; //This doesn't do anything yet
    TRef fhist;
+   static TString fDefaultFitType;
 
  public:  
    virtual void Print(Option_t *opt = "") const;
-   virtual void Clear();
+   virtual void Clear(Option_t* opt = "" );
+   virtual void ClearParameters(Option_t *opt = "");
+   virtual void CopyParameters(TF1* copy) const;
 
    ClassDef(TGRSIFit,0);
 };

@@ -25,13 +25,15 @@ class TTigress : public TGRSIDetector {
 
   public:
     TTigress();
-      TTigress(const TTigress&);
+    TTigress(const TTigress&);
     virtual ~TTigress();
 
   public: 
     void BuildHits(TGRSIDetectorData *data =0,Option_t *opt = ""); //!
     void BuildAddBack(Option_t *opt="");  //!
 
+    const TTigressHit *GetTigressHit(const int i) const { return &tigress_hits.at(i);     } //!
+    const TGRSIDetectorHit *GetHit(const int i)   const { return GetTigressHit(i);       } //!
     TTigressHit *GetTigressHit(const int i) { return &tigress_hits.at(i);     } //!
     TGRSIDetectorHit *GetHit(const int i)   { return GetTigressHit(i);       } //!
     Int_t GetMultiplicity()                 { return tigress_hits.size();    } //!
@@ -39,7 +41,7 @@ class TTigress : public TGRSIDetector {
     TTigressHit *GetAddBackHit(int i)       { return &addback_hits.at(i);     } //!
     Int_t GetAddBackMultiplicity()          { return addback_hits.size();    } //!
 
-    void AddHit(TTigressHit *hit,Option_t *opt); 
+    //void AddHit(TTigressHit *hit,Option_t *opt); 
     void AddTigressHit(const TTigressHit&); 
     void AddAddBackHit(const TTigressHit&); 
     
@@ -47,7 +49,7 @@ class TTigress : public TGRSIDetector {
 
     static TVector3 GetPosition(int DetNbr ,int CryNbr, int SegNbr, double distance = 110.);    //!
     void FillData(TFragment*,TChannel*,MNEMONIC*); //!
-    void FillBGOData(TFragment*,TChannel*,MNEMONIC*); //!
+    //void FillBGOData(TFragment*,TChannel*,MNEMONIC*); //!
 
   private: 
     TTigressData *tigdata;        //!
@@ -79,8 +81,9 @@ class TTigress : public TGRSIDetector {
     virtual void Clear(Option_t *opt = "");     //!
     virtual void Print(Option_t *opt = "") const; //!
     virtual void Copy(TTigress&) const;           //!
+   
 
-   ClassDef(TTigress,1)  // Tigress Physics structure
+  ClassDef(TTigress,3)  // Tigress Physics structure
 
 
 };

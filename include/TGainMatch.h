@@ -3,13 +3,13 @@
 
 #include "TCal.h"
 #include "TCalManager.h"
-#include "TPeak.h"
-#include "TSpectrum.h"
 #include "TH2.h"
 #include "TF1.h"
-#include "Math/Minimizer.h"
-#include "Math/Factory.h"
-#include "Math/Functor.h"
+#include "TPeak.h"
+
+
+
+#include "TSpectrum.h"
 #include "TRandom2.h"
 #include "TError.h"
 #include <algorithm>
@@ -18,7 +18,7 @@
 
 class TGainMatch : public TCal {
  public: 
-   TGainMatch(){}
+   TGainMatch():fhist(0) { }
    TGainMatch(const char* name, const char* title) : TCal(name,title){Clear();}
    virtual ~TGainMatch(){} 
 

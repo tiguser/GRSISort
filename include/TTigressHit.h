@@ -20,14 +20,15 @@
 class TTigressHit : public TGRSIDetectorHit {
   public:
     TTigressHit();
+    TTigressHit(const TFragment&);
     TTigressHit(const TTigressHit&);
     virtual ~TTigressHit();
 
   private:
     UShort_t first_segment;        
     Int_t    first_segment_charge;   //!
-    Bool_t   is_crys_set;            //!
-    UShort_t crystal;                //!
+    mutable Bool_t   is_crys_set;            //!
+    UShort_t fCrystal;                //!
 
     //TGRSIDetectorHit core;  this!
     std::vector<TGRSIDetectorHit> segments;
@@ -51,7 +52,7 @@ class TTigressHit : public TGRSIDetectorHit {
   
     TVector3 GetPosition(Double_t dist=110.); 
 
-    inline double GetDoppler(double beta,TVector3 *vec=0); 
+    double GetDoppler(double beta,TVector3 *vec=0); 
 
     inline int GetSegmentMultiplicity() { return segments.size(); } //!
     inline int GetBGOMultiplicity()     { return bgos.size();     } //!
@@ -60,6 +61,7 @@ class TTigressHit : public TGRSIDetectorHit {
     inline TGRSIDetectorHit &GetCore()                      { return *this;  } 
 
     void CheckFirstHit(int charge,int segment);                    //!
+    int  GetCrystal() const;
 
 //    static bool Compare(TTigressHit lhs, TTigressHit rhs);        //!     { return (lhs.GetDetectorNumber() < rhs.GetDetectorNumber()); }
 //    static bool CompareEnergy(TTigressHit lhs, TTigressHit rhs);  //!     { return (lhs.GetDetectorNumber() < rhs.GetDetectorNumber()); }
@@ -74,7 +76,7 @@ class TTigressHit : public TGRSIDetectorHit {
     virtual void Copy(TObject&) const;                             //!
     virtual void Print(Option_t *opt = "") const;                    //!
 
-  ClassDef(TTigressHit,1)
+  ClassDef(TTigressHit,3)
 };
 
 

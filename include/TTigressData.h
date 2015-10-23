@@ -132,24 +132,24 @@ class TTigressData : public TGRSIDetectorData {
 
 
 
-    inline UShort_t  GetCloverNumber(const unsigned int &i)  { return fClover_Nbr.at(i);} //!
-    inline UShort_t  GetCoreNumber(const unsigned int &i)    { return fCore_Nbr.at(i);  } //!
-    inline TFragment GetCoreFragment(const unsigned int &i)  { return fCore_Frag.at(i); } //!
+    const UShort_t  GetCloverNumber(const unsigned int &i)  const { return fClover_Nbr.at(i);} //!
+    const UShort_t  GetCoreNumber(const unsigned int &i)    const { return fCore_Nbr.at(i);  } //!
+    const TFragment &GetCoreFragment(const unsigned int &i)  { return fCore_Frag.at(i); } //!
 
-    inline UShort_t  GetSegCloverNumber(const unsigned int &i) {return fSeg_Clover_Nbr.at(i);} //!
-    inline UShort_t  GetSegCoreNumber(const unsigned int &i)   {return fSeg_Core_Nbr.at(i);}   //!
-    inline UShort_t  GetSegmentNumber(const unsigned int &i)   {return fSegment_Nbr.at(i);}    //!
-    inline TFragment GetSegmentFragment(const unsigned int &i) {return fSegment_Frag.at(i);}   //!
+    const UShort_t  GetSegCloverNumber(const unsigned int &i) const {return fSeg_Clover_Nbr.at(i);} //!
+    const UShort_t  GetSegCoreNumber(const unsigned int &i)   const {return fSeg_Core_Nbr.at(i);}   //!
+    const UShort_t  GetSegmentNumber(const unsigned int &i)   const {return fSegment_Nbr.at(i);}    //!
+    const TFragment &GetSegmentFragment(const unsigned int &i) {return fSegment_Frag.at(i);}   //!
 
 
-    inline UShort_t  GetBgoCloverNumber(const unsigned int &i) {return fBgo_Clover_Nbr.at(i);} //!
-    inline UShort_t  GetBgoCoreNumber(const unsigned int &i)   {return fBgo_Core_Nbr.at(i);}   //!
-    inline UShort_t  GetBgoNumber(const unsigned int &i)       {return fBgo_Nbr.at(i);}        //!
-    inline TFragment GetBgoFragment(const unsigned int &i)     {return fBgo_Frag.at(i);}       //!
+    const UShort_t  GetBgoCloverNumber(const unsigned int &i) const {return fBgo_Clover_Nbr.at(i);} //!
+    const UShort_t  GetBgoCoreNumber(const unsigned int &i)   const {return fBgo_Core_Nbr.at(i);}   //!
+    const UShort_t  GetBgoNumber(const unsigned int &i)       const {return fBgo_Nbr.at(i);}        //!
+    const TFragment &GetBgoFragment(const unsigned int &i)     {return fBgo_Frag.at(i);}       //!
 
-    inline unsigned int GetCoreMultiplicity()    { return fCore_Nbr.size();    }  //!
-    inline unsigned int GetSegmentMultiplicity() { return fSegment_Nbr.size(); }  //!
-    inline unsigned int GetBgoMultiplicity()     { return fBgo_Nbr.size();     }  //!
+    const unsigned int GetCoreMultiplicity()    { return fCore_Nbr.size();    }  //!
+    const unsigned int GetSegmentMultiplicity() { return fSegment_Nbr.size(); }  //!
+    const unsigned int GetBgoMultiplicity()     { return fBgo_Nbr.size();     }  //!
 };
 
 

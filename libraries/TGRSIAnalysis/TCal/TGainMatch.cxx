@@ -1,9 +1,16 @@
 #include "TGainMatch.h"
 
+#include "Math/Minimizer.h"
+#include "Math/Factory.h"
+#include "Math/Functor.h"
+
+
+
 ClassImp(TGainMatch)
 
-TGainMatch::TGainMatch(const TGainMatch &copy) : TCal(copy){
-   ((TGainMatch&)copy).Copy(*this);
+TGainMatch::TGainMatch(const TGainMatch &copy) : TCal(copy) {
+  fhist = 0;
+  ((TGainMatch&)copy).Copy(*this);
 }
 
 void TGainMatch::Copy(TObject &obj) const{
@@ -40,6 +47,8 @@ Bool_t TGainMatch::CoarseMatch(TH1* hist, Int_t chanNum, Double_t energy1, Doubl
 //This might have to be changed slightly if someone wants a different type of gaussian fitted
 //for gain matching purposes.
    if(!hist) return false;
+
+   fhist = hist;
 
    //I might want to do a clear of the gainmatching parameters at this point.
 
@@ -96,9 +105,9 @@ Bool_t TGainMatch::CoarseMatch(TH1* hist, Int_t chanNum, Double_t energy1, Doubl
 
    //We now want to create a peak for each one we found (2) and fit them.
    for(int x=0; x<2; x++){
-      TPeak tmpPeak(foundbin[x],foundbin[x] - 20./binWidth, foundbin[x] + 20./binWidth);
+      TPeak tmpPeak(foundbin[x],foundbin[x] - 10./binWidth, foundbin[x] + 10./binWidth);
       tmpPeak.SetName(Form("GM_Cent_%lf",foundbin[x]));//Change the name of the TPeak to know it's origin
-      tmpPeak.Fit(hist,"M+");
+      tmpPeak.Fit(hist,"+");
       this->SetPoint(x,tmpPeak.GetParameter("centroid"),engvec[x]);
    }
 
@@ -155,7 +164,7 @@ Bool_t TGainMatch::FineMatchFast(TH1* hist1, TPeak* peak1, TH1* hist2, TPeak* pe
       //What we are actually doing is applying the recirpocal gain to the energy of the real peak
       //to figure out where the centroid of the charge is spectrum is roughly going to be
       //First read in the rough gain coefficients
-      std::vector<Double_t> rough_coeffs = chan->GetENGCoeff();
+      std::vector<Float_t> rough_coeffs = chan->GetENGCoeff();
       gain = rough_coeffs.at(1);
       offset = rough_coeffs.at(0);
    }
@@ -355,7 +364,8 @@ Bool_t TGainMatch::CoarseMatchAll(TCalManager* cm, TH2 *mat, Double_t energy1, D
          badlist.push_back(chan);
          continue;
       }
-      cm->AddToManager(gm);
+      gm->SetName(Form("gm_chan_%d",chan));
+      cm->AddToManager(gm,chan);
    }
    if(badlist.size())
       printf("The following channels did not gain match properly: ");
@@ -671,7 +681,7 @@ Bool_t TGainMatch::FineMatch(TH1 *energy_hist, TH1* testhist, TH1* charge_hist, 
       //What we are actually doing is applying the recirpocal gain to the energy of the real peak
       //to figure out where the centroid of the charge is spectrum is roughly going to be
       //First read in the rough gain coefficients
-      std::vector<Double_t> rough_coeffs = chan->GetENGCoeff();
+      std::vector<Float_t> rough_coeffs = chan->GetENGCoeff();
       gain = rough_coeffs.at(1);
       offset = rough_coeffs.at(0);
    }
@@ -752,8 +762,8 @@ Bool_t TGainMatch::FineMatch(TH1 *energy_hist, TH1* testhist, TH1* charge_hist, 
 
    charge_hist->GetXaxis()->UnZoom();
    hist2->GetXaxis()->UnZoom();
-   peak1->Fit(charge_hist,"MS+");
-   peak2->Fit(hist2,"MS+");
+   peak1->Fit(charge_hist,"MSL+");
+   peak2->Fit(hist2,"MSL+");
    
    charge_hist->Draw();
    peak1->Draw("same");

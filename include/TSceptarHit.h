@@ -23,7 +23,7 @@ class TSceptarHit : public TGRSIDetectorHit {
    
   public:
   // void SetHit();
-		/////////////////////////		/////////////////////////////////////
+    /////////////////////////    /////////////////////////////////////
       inline void SetFilterPattern(const int &x)   { filter   = x; }   //! 
    //   inline void SetPosition(TVector3 x)          { position = x; }   //!
 
@@ -53,12 +53,12 @@ class TSceptarHit : public TGRSIDetectorHit {
          }
       } //!
 
-		/////////////////////////		/////////////////////////////////////
+    /////////////////////////    /////////////////////////////////////
       inline Int_t    GetFilterPattern()    const     { return filter;   }  //!
       TVector3 GetPosition(Double_t dist = 0) const; //!
       //double GetTime(Option_t * opt = "") const; //!
-      ULong_t  GetTime(Option_t * opt = "") const; //!
-  //    inline std::vector<Short_t> GetWaveform() 		{ return waveform; }  //!
+      ULong_t  GetTimeStamp(Option_t * opt = "") const; //!
+  //    inline std::vector<Short_t> GetWaveform()     { return waveform; }  //!
 
       Int_t CalculateCfd(double attenuation, int delay, int halfsmoothingwindow, int interpolation_steps); //!
       Int_t CalculateCfdAndMonitor(double attenuation, int delay, int halfsmoothingwindow, int interpolation_steps, std::vector<Short_t> &monitor); //!
@@ -71,12 +71,12 @@ class TSceptarHit : public TGRSIDetectorHit {
  //     void Add(TSceptarHit*);                                          //!
    bool AnalyzeWaveform();                                          //!
 
-	public:
-		void Clear(Option_t *opt = "");		                    //!
-		void Print(Option_t *opt = "") const;		                    //!
+  public:
+    void Clear(Option_t *opt = "");                        //!
+    void Print(Option_t *opt = "") const;                        //!
       virtual void Copy(TSceptarHit&) const;        //!
 
-	ClassDef(TSceptarHit,1)
+  ClassDef(TSceptarHit,1) //Stores the information for a SceptarHit
 };
 
 #endif

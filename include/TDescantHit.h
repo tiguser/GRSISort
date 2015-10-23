@@ -15,7 +15,7 @@ class TDescantHit : public TGRSIDetectorHit {
   public:
     TDescantHit();
     virtual ~TDescantHit();
-	 TDescantHit(const TDescantHit&);
+   TDescantHit(const TDescantHit&);
 
   private:
     Int_t    filter;
@@ -26,7 +26,7 @@ class TDescantHit : public TGRSIDetectorHit {
 //    std::vector<Short_t> waveform;
 
   public:
-		/////////////////////////		/////////////////////////////////////
+    /////////////////////////    /////////////////////////////////////
       inline void SetFilterPattern(const int &x)   { filter   = x; }   //! 
       inline void SetPsd(const int &x)             { psd      = x; }   //!
       inline void SetZc(const int &x)              { zc       = x; }   //!
@@ -60,15 +60,14 @@ class TDescantHit : public TGRSIDetectorHit {
          }
       } //!
 
-		/////////////////////////		/////////////////////////////////////
+    /////////////////////////    /////////////////////////////////////
       inline Int_t    GetFilterPattern()       { return filter;   }  //!
       inline Int_t    GetPsd()                 { return psd;      }  //!
       inline Int_t    GetZc()                  { return zc;      }  //!
       inline Int_t    GetCcShort()             { return ccShort;      }  //!
       inline Int_t    GetCcLong()              { return ccLong;      }  //!
       TVector3 GetPosition(Double_t dist = 0) const; //!
-      //double GetTime(Option_t * opt = "") const; //!
-      ULong_t GetTime(Option_t * opt = "") const; //!
+      //ULong_t GetTimeStamp(Option_t * opt = "") const; //!
 //      inline std::vector<Short_t> GetWaveform() { return waveform; }  //!
 
       Int_t CalculateCfd(double attenuation, int delay, int halfsmoothingwindow, int interpolation_steps); //!
@@ -86,12 +85,12 @@ class TDescantHit : public TGRSIDetectorHit {
 
       bool AnalyzeWaveform();                                          //!
 
-	public:
+  public:
       void Copy(TDescantHit&) const;        //!
-		void Clear(Option_t *opt = "");		                    //!
-		void Print(Option_t *opt = "") const;		                    //!
+    void Clear(Option_t *opt = "");                        //!
+    void Print(Option_t *opt = "") const;                        //!
 
-	ClassDef(TDescantHit,3)
+  ClassDef(TDescantHit,3)
 };
 
 #endif

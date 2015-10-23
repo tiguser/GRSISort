@@ -13,42 +13,35 @@
 
 
 class TPacesHit : public TGRSIDetectorHit {
-	public:
-		TPacesHit();
-		TPacesHit(const TPacesHit&);
-		virtual ~TPacesHit();
+  public:
+    TPacesHit();
+    TPacesHit(const TPacesHit&);
+    virtual ~TPacesHit();
 
-	private:
+  private:
       Int_t filter;
-      Int_t ppg;
 
-   //flags
-   private:
-      Bool_t is_crys_set; //!
-
-	public:
-		/////////////////////////  Setters	/////////////////////////////////////
+  public:
+    /////////////////////////  Setters  /////////////////////////////////////
       inline void SetFilterPattern(const int &x)   { filter = x;   }                  //! 
-      inline void SetPPG(const int &x)             { ppg = x;   }                     //! 
       //void SetHit();
       //virtual double GetTime(Option_t *opt = "") const;                                 //!
-      virtual ULong_t GetTime(Option_t *opt = "") const;                                 //!
+      //virtual ULong_t GetTimeStamp(Option_t *opt = "") const;                                 //!
 
       TVector3 GetPosition(Double_t dist = 0.0) const; //!
 
-		/////////////////////////  Getters	/////////////////////////////////////
+    /////////////////////////  Getters  /////////////////////////////////////
       inline Int_t    GetFilterPattern() const         {   return filter;   }          //!
-      inline Int_t    GetPPG() const                  {   return ppg;   }             //!
 
-		/////////////////////////  TChannel Helpers /////////////////////////////////////
+    /////////////////////////  TChannel Helpers /////////////////////////////////////
       bool   InFilter(Int_t);  //!
 
-	public:
-		virtual void Clear(Option_t *opt = "");		 //!
-		virtual void Print(Option_t *opt = "") const; //!
+  public:
+    virtual void Clear(Option_t *opt = "");     //!
+    virtual void Print(Option_t *opt = "") const; //!
       virtual void Copy(TPacesHit&) const;        //!
 
-	ClassDef(TPacesHit,2);
+  ClassDef(TPacesHit,3);
 };
 
 

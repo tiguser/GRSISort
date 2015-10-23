@@ -1,30 +1,16 @@
 #ifndef TCAL_H__
 #define TCAL_H__
 
-#include "Varargs.h"
-#include "TNamed.h"
-#include "TH1.h"
-#include "TF1.h"
-#include "TList.h"
-#include "TFitResult.h"
-#include "TFitResultPtr.h"
-#include "TRandom.h"
-#include "TSpectrum.h"
-#include "TVirtualFitter.h"
-#include "TMath.h"
-#include "TCanvas.h"
-#include <map>
-#include <vector>
-#include <utility>
-#include "TROOT.h"
-#include "TChannel.h"
-#include "TMultiGraph.h"
-#include "TGraphErrors.h"
-#include "TNucleus.h"
-#include "TRef.h"
-//#include "../include/TNucleus.h"
 
-#include "../include/TGRSITransition.h"
+
+#include "TGraphErrors.h"
+#include "TF1.h"
+#include "TH1.h"
+#include "TNucleus.h"
+#include "TChannel.h"
+#include <vector>
+
+#include "TRef.h"
 
 class TCal : public TGraphErrors {
  public: 

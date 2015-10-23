@@ -45,10 +45,10 @@ bool TDescantHit::InFilter(Int_t wantedfilter) {
    return true;
 }
 
-ULong_t TDescantHit::GetTime(Option_t *opt) const {
+//ULong_t TDescantHit::GetTime(Option_t *opt) const {
    //return (double)time;
-   return time;
-}
+//   return time;
+//}
 
 void TDescantHit::Clear(Option_t *opt)	{
    filter = 0;

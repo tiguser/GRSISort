@@ -16,84 +16,69 @@
 
 
 class TGriffinHit : public TGRSIDetectorHit {
-	public:
-		TGriffinHit();
-		TGriffinHit(const TGriffinHit&);
-		virtual ~TGriffinHit();
+  public:
+    enum EGriffinHitBits {
+      kCrystalSet = 1<<0,
+      kBit1       = 1<<1,
+      kBit2       = 1<<2,
+      kBit3       = 1<<3,
+      kBit4       = 1<<4,
+      kBit5       = 1<<5,
+      kBit6       = 1<<6,
+      kBit7       = 1<<7
+    };
 
-	private:
-      Int_t filter;
-      Int_t ppg;
-      UInt_t crystal; //!
+  public:
+    TGriffinHit();
+    TGriffinHit(const TGriffinHit&);
+    virtual ~TGriffinHit();
 
-   //flags
-   private:
-      Bool_t is_crys_set; //!
+  private:
+    Int_t fFilter;             //  The Filter Word
+    UChar_t fGriffinHitBits;   //  Transient Member Flags
+    UInt_t fCrystal;           //! Crystal Number       
 
-	public:
-		/////////////////////////  Setters	/////////////////////////////////////
-      inline void SetFilterPattern(const int &x)   { filter = x;   }                  //! 
-      inline void SetPPG(const int &x)             { ppg = x;   }                     //! 
-      //void SetHit();
-      //virtual double GetTime(Option_t *opt = "") const;                                 //!
-      virtual ULong_t GetTime(Option_t *opt = "") const;                                 //!
+  public:
+    /////////////////////////  Setters  /////////////////////////////////////
+    inline void SetFilterPattern(const int &x)   { fFilter = x;   }                  //! 
+    //inline void SetPPG(const int &x)             { ppg = x;   }                     //! 
+    //void SetHit();
+    //virtual double GetTime(Option_t *opt = "") const;                                 //!
+    //virtual ULong_t GetTimeStamp(Option_t *opt = "") const;                                 //!
 
-//		void SetPosition(double dist =110);   //!
-      TVector3 GetPosition(Double_t dist = 110.0) const; //!
+    TVector3 GetPosition(Double_t dist = 110.0) const; //!
 
-		/////////////////////////  Getters	/////////////////////////////////////
-      inline Int_t    GetFilterPattern() const         {   return filter;   }          //!
-      inline Int_t    GetPPG() const                  {   return ppg;   }             //!
+    /////////////////////////  Getters  /////////////////////////////////////
+    inline Int_t    GetFilterPattern() const         {   return fFilter;   }          //!
 
-   //          Int_t    GetCharge(Option_t *opt ="low") const;                          //!
-		//inline Long_t   GetTime() const 			        {	return time;     }           //!
-
-      /////////////////////////  Required Functions ///////////////////////////
-  //    double GetEnergy(Option_t *opt ="low") const;                             //!
-
-      /////////////////////////  Recommended Functions/////////////////////////
+    /////////////////////////  Recommended Functions/////////////////////////
 
 
 
-		/////////////////////////  TChannel Helpers /////////////////////////////////////
-      UInt_t GetCrystal()  const;//!
-      UInt_t GetCrystal();
-      UInt_t SetCrystal(char color);
-      UInt_t SetCrystal(UInt_t crynum);
+    /////////////////////////  TChannel Helpers /////////////////////////////////////
+    UInt_t GetCrystal()  const;//!
+    UInt_t GetCrystal();
+    UInt_t SetCrystal(char color);
+    UInt_t SetCrystal(UInt_t crynum);
+    Bool_t IsCrystalSet() const {return IsSubDetSet();}
 
-		/////////////////////////		/////////////////////////////////////
-		//inline UShort_t GetDetectorNumber() const	     {	return detector; }  //!
-		//inline UShort_t GetCrystalNumber() const	     {	return crystal;  }  //!
+    /////////////////////////    /////////////////////////////////////
 
-      inline UShort_t GetArrayNumber() { return( 4*(GetDetector()-1)+(GetCrystal()+1)); } //!
-      // returns a number 1-64 ( 1 = Detector 1 blue;  64 =  Detector 16 white; ) 
+    inline UShort_t GetArrayNumber() { return( 4*(GetDetector()-1)+(GetCrystal()+1)); } //!
+    // returns a number 1-64 ( 1 = Detector 1 blue;  64 =  Detector 16 white; ) 
 
-      //inline Int_t    GetChargeLow() const			  {	return charge_lowgain;	  }  //!
-		//inline Int_t    GetChargeHigh() const			  {	return charge_highgain;	  }  //!
-      //inline Int_t    GetCfd() const                 {   return cfd;      }  //!
-      //inline Double_t GetEnergyLow() const		     {	return energy_lowgain;   }  //!
-      //inline Double_t GetEnergyHigh() const		     {	return energy_highgain;   }  //!
-		//inline Long_t   GetTime() const 			        {	return time;     }  //!
+    bool   InFilter(Int_t);  //!
 
-      //inline Int_t    GetFilterPatter() const         {   return filter;   }  //!
-      //inline Int_t    GetPPG() const                  {   return ppg;   }  //!
-      //inline std::vector<Short_t> GetWaveForm() const{   return waveform;} //!
+    static bool CompareEnergy(const TGriffinHit*, const TGriffinHit*);  //!
+    void Add(const TGriffinHit*);    //! 
+    //Bool_t BremSuppressed(TSceptarHit*);
 
-      bool   InFilter(Int_t);  //!
+  public:
+    virtual void Clear(Option_t *opt = "");     //!
+    virtual void Print(Option_t *opt = "") const; //!
+    virtual void Copy(TGriffinHit&) const;        //!
 
-//      static bool CompareEnergy(TGriffinHit*,TGriffinHit*);  //!
-//      void Add(TGriffinHit*);    //! 
-//      Bool_t BremSuppressed(TSceptarHit*);
-      static bool CompareEnergy(TGriffinHit*,TGriffinHit*);  //!
-      void Add(TGriffinHit*);    //! 
-      //Bool_t BremSuppressed(TSceptarHit*);
-
-	public:
-		virtual void Clear(Option_t *opt = "");		 //!
-		virtual void Print(Option_t *opt = "") const; //!
-      virtual void Copy(TGriffinHit&) const;        //!
-
-	ClassDef(TGriffinHit,2);
+  ClassDef(TGriffinHit,3);
 };
 
 
